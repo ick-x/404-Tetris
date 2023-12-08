@@ -10,18 +10,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const COLUMNS = 10;
     const BLOCK_SIZE = 30;
 
-    const tetrisGrid = Array.from({ length: ROWS }, () => Array(COLUMNS).fill(0));
+    let tetrisGrid = newGrid();
+
     let currentPiece;
     let intervalId;
 
-    function drawSquare(x, y, color) {
-        context.fillStyle = color;
-        context.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-        context.strokeStyle = '#fff';
-        context.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+    function newGrid(){
+       return Array.from({ length: ROWS }, () => Array(COLUMNS).fill(0))
     }
 
-    function draw() {
+    function drawSquare(x, y, color, padding = 0) {
+        context.fillStyle = color;
+        context.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE+padding, BLOCK_SIZE, BLOCK_SIZE);
+        context.strokeStyle = '#fff';
+        context.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE+padding, BLOCK_SIZE, BLOCK_SIZE);
+    }
+
+
+
+    function drawGridAndPiece() {
         context.clearRect(0, 0, canvas.width, canvas.height);
 
         for (let row = 0; row < ROWS; row++) {
@@ -40,9 +47,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     class TetrisPiece {
         constructor(shape, color) {
+            this.frame = 0;
+            this.maxFrame = 60;
             this.shape = shape;
             this.color = color;
-            this.row = 0;
+            this.row = -shape.length+1;
             this.col = Math.floor(COLUMNS / 2) - Math.floor(shape[0].length / 2);
         }
 
@@ -50,14 +59,23 @@ document.addEventListener('DOMContentLoaded', () => {
             this.shape.forEach((row, i) => {
                 row.forEach((col, j) => {
                     if (col) {
-                        drawSquare(this.col + j, this.row + i, this.color);
+                        drawSquare(this.col + j, this.row + i, this.color, BLOCK_SIZE* this.frame/this.maxFrame - BLOCK_SIZE);
                     }
                 });
             });
         }
 
+
+        autoMoveDown() {
+            ++this.frame;
+            if(this.frame === this.maxFrame){
+                this.frame = 0;
+                this.row++;
+            }
+        }
         moveDown() {
             this.row++;
+            this.frame = 0;
         }
 
         moveLeft() {
@@ -79,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < currentPiece.shape.length; i++) {
             for (let j = 0; j < currentPiece.shape[i].length; j++) {
                 if (
-                    currentPiece.shape[i][j] &&
+                     currentPiece.row>=0 && currentPiece.shape[i][j] &&
                     (tetrisGrid[currentPiece.row + i] &&
                         tetrisGrid[currentPiece.row + i][currentPiece.col + j]) !== 0
                 ) {
@@ -94,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPiece.shape.forEach((row, i) => {
             row.forEach((col, j) => {
                 if (col) {
-                    tetrisGrid[currentPiece.row + i][currentPiece.col + j] = currentPiece.color;
+                    tetrisGrid[currentPiece.row + i - 1][currentPiece.col + j] = currentPiece.color;
                 }
             });
         });
@@ -110,23 +128,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function update() {
-        if (currentPiece) {
-            currentPiece.moveDown();
 
-            if (collision()) {
-                currentPiece.moveDown(); // Revert the move
+        if (currentPiece) {
+            currentPiece.autoMoveDown();
+
+            if (collision()) { // Revert the move
                 mergePiece();
                 clearRows();
 
                 currentPiece = new TetrisPiece(getRandomShape(), getRandomColor());
-
-                if (collision()) {
-                    // Game over
-                    clearInterval(intervalId);
-                    alert('Game Over!');
-                }
             }
         }
+
     }
 
     function getRandomShape() {
@@ -152,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function handleKeyPress(event) {
+
         switch (event.code) {
             case 'ArrowLeft':
                 currentPiece.moveLeft();
@@ -164,16 +178,9 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'ArrowDown':
                 currentPiece.moveDown();
                 if (collision()) {
-                    currentPiece.moveUp(); // Revert the move
                     mergePiece();
                     clearRows();
                     currentPiece = new TetrisPiece(getRandomShape(), getRandomColor());
-
-                    if (collision()) {
-                        // Game over
-                        clearInterval(intervalId);
-                        alert('Game Over!');
-                    }
                 }
                 break;
             case 'ArrowUp':
@@ -189,42 +196,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     intervalId = setInterval(() => {
         update();
-        draw();
+        drawGridAndPiece();
     }, 500); // Adjust the speed as needed
-});
+    function checkLoose(){
+        for(let i = 0; i<tetrisGrid[0].length;++i){
+            if(tetrisGrid[0][i]!==0){
 
-// Fonction de boucle de jeu
-function gameLoop() {
-    update();
-    draw();
-}
-
-function draw() {
-    context.clearRect(0, 0, canvas.width, canvas.height);
-
-    drawGrid();
-    drawCurrentPiece();
-}
-
-function drawGrid() {
-    let ROWS;
-    for (let row = 0; row < ROWS; row++) {
-        for (let col = 0; col < COLUMNS; col++) {
-            const color = tetrisGrid[row][col];
-            if (color) {
-                drawSquare(col, row, color);
+                clearInterval(intervalId);
+                if (confirm('Game Over! \n Voulez vous rejouer ?')) {
+                    tetrisGrid = newGrid();
+                } else {
+                    open("/404-Tetris/index.html", "_self");
+                }
             }
         }
     }
-}
-
-function drawCurrentPiece() {
-    if (currentPiece) {
-        currentPiece.draw();
+// Fonction de boucle de jeu
+    function gameLoop() {
+        checkLoose();
+        update();
+        drawGridAndPiece();
     }
-}
+
+    // Lancer la boucle de jeu
+    setInterval(gameLoop, 1);// Mettez à jour toutes les demi-secondes (ajustez selon vos besoins)
+
+});
 
 
-// Lancer la boucle de jeu
-    setInterval(gameLoop, 1000 / 2);// Mettez à jour toutes les demi-secondes (ajustez selon vos besoins)
-})
+
