@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         autoMoveDown() {
+            clearRows()
             ++this.frame;
             if(this.frame === this.maxFrame){
                 this.frame = 0;
@@ -109,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function mergePiece() {
+
         currentPiece.shape.forEach((row, i) => {
             row.forEach((col, j) => {
                 if (col) {
@@ -134,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (collision()) { // Revert the move
                 mergePiece();
-                clearRows();
+
 
                 currentPiece = new TetrisPiece(getRandomShape(), getRandomColor());
             }
@@ -179,7 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentPiece.moveDown();
                 if (collision()) {
                     mergePiece();
-                    clearRows();
                     currentPiece = new TetrisPiece(getRandomShape(), getRandomColor());
                 }
                 break;
