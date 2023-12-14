@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize a new grid
     function newGrid() {
-        return Array.from({ length: ROWS }, () => Array(COLUMNS).fill(0));
+        return Array.from({length: ROWS}, () => Array(COLUMNS).fill(0));
     }
 
     // Draw a colored square on the canvas
@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update the game state
     function update() {
         // Display the score
-        displayScore.innerHTML = score;
+        displayScore.innerHTML = "Score : " + score;
 
         if (currentPiece) {
             // Automatically move the piece down
