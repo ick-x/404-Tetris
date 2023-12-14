@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Increment the tic counter and increase speed over time
         ticCounter++;
-        if (ticCounter === 5000 && speedModifier < 4) {
+        if (ticCounter === 10000 && speedModifier < 4) {
             ticCounter = 0;
             speedModifier++;
         }
@@ -286,7 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
         update();
         update();
         drawGridAndPiece();
-        console.log("speedModifier : ", speedModifier)
         refreshScore(lineCount);
     }
 
