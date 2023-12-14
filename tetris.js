@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearInterval(intervalId);
                 if (confirm('Game Over! \n Do you want to play again?')) {
                     tetrisGrid = newGrid();
-                    speedModifier = 0;
+                    speedModifier = 1;
                 } else {
                     open("/404-Tetris/index.html", "_self");
                 }
