@@ -12,8 +12,23 @@ body {
     background-color: #f0f0f0;
 }
 
-canvas {
+#tetrisCanvas {
     border: 1px solid #000;
+}
+
+#nextPieceCanvas {
+    margin : 10px;
+}
+
+.container-column {
+    display:flex;
+    flex-direction : column;
+
+}
+
+.container-row {
+    display:flex;
+    flex-direction : row;
 }
 
 .grid {
@@ -25,4 +40,5 @@ canvas {
 .score {
     margin: 10px;
     padding:10px;
+    text-align: center;
 }

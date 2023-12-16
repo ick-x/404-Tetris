@@ -1,3 +1,3 @@
 document.getElementById('goToSecondPage').addEventListener('click', function() {
-    window.location = "../pages/second_page.html";
+    window.location = "404-tetris-main/pages/second_page.html";
 });

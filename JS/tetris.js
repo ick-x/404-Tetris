@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let tetrisGrid = newGrid();
 
     let currentPiece;
+    let nextPiece;
     let intervalId;
 
     let ticCounter = 0;
@@ -24,12 +25,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Draw a colored square on the canvas
-    function drawSquare(x, y, color, padding = 0) {
+
+
+    function drawSquare(x, y, color, padding = 0, context = null, blockSize = BLOCK_SIZE) {
+
+        if (context == null) {
+            context = document.getElementById('tetrisCanvas').getContext('2d');
+        }
+
         context.fillStyle = color;
-        context.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE + padding, BLOCK_SIZE, BLOCK_SIZE);
+        context.fillRect(x * blockSize, y * blockSize + padding, blockSize, blockSize);
         context.strokeStyle = '#fff';
-        context.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE + padding, BLOCK_SIZE, BLOCK_SIZE);
+        context.strokeRect(x * blockSize, y * blockSize + padding, blockSize, blockSize);
     }
+
 
     // Draw the grid and the current tetris piece
     function drawGridAndPiece() {
@@ -50,6 +59,30 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPiece.draw();
         }
     }
+
+    function drawNextPiece() {
+        const nextPieceCanvas = document.getElementById('nextPieceCanvas');
+        const nextPieceContext = nextPieceCanvas.getContext('2d');
+
+        // Effacer le canvas
+        nextPieceContext.clearRect(0, 0, nextPieceCanvas.width, nextPieceCanvas.height);
+
+        // Récupérer la forme et la couleur de la prochaine pièce
+        const nextShape = getRandomShape();
+        const nextColor = getRandomColor();
+
+        nextPiece = new TetrisPiece(nextShape, nextColor);
+
+        // Dessiner la pièce sur le canvas
+        nextPiece.shape.forEach((row, i) => {
+            row.forEach((col, j) => {
+                if (col) {
+                    drawSquare(j, i, nextColor, 0, nextPieceContext, BLOCK_SIZE);
+                }
+            });
+        });
+    }
+
 
     // Class representing a Tetris piece
     class TetrisPiece {
@@ -77,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Automatically move the Tetris piece down
         autoMoveDown() {
             clearRows();
-            this.frame += 1 * speedModifier;
+            this.frame += speedModifier;
             if (this.frame === this.maxFrame) {
                 this.frame = 0;
                 this.row++;
@@ -164,16 +197,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Revert the move and merge the piece into the grid
                 mergePiece();
                 // Generate a new random piece
-                currentPiece = new TetrisPiece(getRandomShape(), getRandomColor());
+                currentPiece = nextPiece;
+                drawNextPiece();
             }
         }
 
         // Increment the tic counter and increase speed over time
         ticCounter++;
-        if (ticCounter === 5000 && speedModifier < 4) {
+        if (ticCounter === 4000 && speedModifier < 4) {
             ticCounter = 0;
             speedModifier++;
         }
+
     }
 
     // Get a random Tetris shape
@@ -239,7 +274,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentPiece.moveDown();
                 if (collision()) {
                     mergePiece();
-                    currentPiece = new TetrisPiece(getRandomShape(), getRandomColor());
+                    currentPiece = nextPiece;
+                    drawNextPiece();
                 }
                 break;
             case 'ArrowUp':
@@ -254,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', handleKeyPress);
 
     // Initialize a new Tetris piece
-    currentPiece = new TetrisPiece(getRandomShape(), getRandomColor());
+
 
     // Set up the game loop
     intervalId = setInterval(() => {
@@ -281,15 +317,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Game loop function
     function gameLoop() {
         checkGameOver();
-        update();
-        update();
-        update();
-        update();
-        drawGridAndPiece();
-        console.log("speedModifier : ", speedModifier)
+        for (let i = 0; i < 4; i++) {
+            update();  // Update game logic
+        }
+        drawGridAndPiece();  // Update UI
         refreshScore(lineCount);
-    }
+        requestAnimationFrame(gameLoop);  // Repeat the loop
 
+    }
+    // Initialize a new Tetris piece
+    currentPiece = new TetrisPiece(getRandomShape(), getRandomColor());
+    drawNextPiece();
     // Start the game loop
-    setInterval(gameLoop, 1); // Update every half-second (adjust as needed)
+    gameLoop();
 });
