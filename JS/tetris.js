@@ -59,8 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 context.beginPath();
-                context.moveTo(col  * BLOCK_SIZE, 0);
-                context.lineTo(col  * BLOCK_SIZE, canvas.height);
+                context.moveTo(col * BLOCK_SIZE, 0);
+                context.lineTo(col * BLOCK_SIZE, canvas.height);
                 context.strokeStyle = 'rgba(220,220,220,0.45)';
                 context.stroke();
             }
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         autoMoveDown() {
             clearRows();
             this.frame += speedModifier;
-            if (this.frame === this.maxFrame) {
+            if (this.frame >= this.maxFrame) {
                 this.frame = 0;
                 this.row++;
             }
@@ -170,7 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
-
 
 
     }
@@ -227,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         ticCounter++;
-        if (ticCounter === 10000 * 4 && speedModifier < 4) {
+        if (ticCounter === 500) {
             ticCounter = 0;
             speedModifier++;
         }
@@ -254,6 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const randomIndex = Math.floor(Math.random() * colors.length);
         return colors[randomIndex];
     }
+
     function refreshScore(lineCounter) {
         switch (lineCounter) {
             case 1:
@@ -296,6 +296,14 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'ArrowUp':
                 currentPiece.rotate();
                 if (collision()) currentPiece.rotate();
+                break;
+            case 'Space':
+                while (!collision()) {
+                currentPiece.moveDown()
+                }
+                mergePiece();
+                currentPiece = nextPiece;
+                drawNextPiece();
                 break;
         }
     }
