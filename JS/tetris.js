@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentPiece;
     let nextPiece;
+    let nbPieces = 1;
 
-    let ticCounter = 0;
     let speedModifier = 1;
 
     let lineCount = 0;
@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const nextColor = getRandomColor();
 
         nextPiece = new TetrisPiece(nextShape, nextColor);
+        nbPieces++;
 
         nextPiece.shape.forEach((row, i) => {
             row.forEach((col, j) => {
@@ -225,9 +226,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        ticCounter++;
-        if (ticCounter === 500) {
-            ticCounter = 0;
+        if (nbPieces === 25) {
+            nbPieces = 0;
             speedModifier++;
         }
 
@@ -333,6 +333,8 @@ document.addEventListener('DOMContentLoaded', () => {
         drawGridAndPiece();
         refreshScore(lineCount);
         requestAnimationFrame(gameLoop);
+        console.log("speedModifier :", speedModifier, "| nbPieces :", nbPieces);
+
     }
 
     currentPiece = new TetrisPiece(getRandomShape(), getRandomColor());
