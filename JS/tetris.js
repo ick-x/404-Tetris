@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         ticCounter++;
-        if (ticCounter === 500) {
+        if (ticCounter === 10000) {
             ticCounter = 0;
             speedModifier++;
         }
