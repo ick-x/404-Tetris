@@ -20,6 +20,10 @@ body {
     margin : 10px;
 }
 
+#savedPieceCanvas {
+     margin : 10px;
+ }
+
 .container-column {
     display:flex;
     flex-direction : column;

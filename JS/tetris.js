@@ -10,13 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentPiece;
     let nextPiece;
-    let nbPieces = 1;
+    let savedPiece;
 
+    let nbPieces = 1;
     let speedModifier = 1;
 
     let lineCount = 0;
     let score = 0;
     let displayScore = document.getElementById("displayScore");
+
 
     function newGrid() {
         return Array.from({length: ROWS}, () => Array(COLUMNS).fill(0));
@@ -97,6 +99,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+    }
+
+    function drawSavedPiece() {
+        const savedPieceCanvas = document.getElementById('savedPieceCanvas');
+        const savedPieceContext = savedPieceCanvas.getContext('2d');
+
+        const savedShape = currentPiece.shape;
+        const savedColor = currentPiece.color;
+
+        savedPiece.shape.forEach((row, i) => {
+            row.forEach((col, j) => {
+                if (col) {
+                    drawSquare(j, i, savedColor, 0, savedPieceContext, BLOCK_SIZE);
+                }
+            });
+        });
+    }
+
+    function clearSavedPiece() {
+        savedPiece = null;
+        const savedPieceCanvas = document.getElementById('savedPieceCanvas');
+        const savedPieceContext = savedPieceCanvas.getContext('2d');
+        savedPieceContext.clearRect(0, 0, savedPieceCanvas.width, savedPieceCanvas.height);
     }
 
     class TetrisPiece {
@@ -325,6 +350,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentPiece = nextPiece;
                 drawNextPiece();
                 break;
+            case 'KeyR':
+                if (savedPiece) {
+                    currentPiece = savedPiece;
+                    // Définir la position en haut de la grille
+                    currentPiece.row = -currentPiece.shape.length + 1;
+                    currentPiece.col = Math.floor(COLUMNS / 2) - Math.floor(currentPiece.shape[0].length / 2);
+                    drawGridAndPiece();
+                    clearSavedPiece();
+                } else {
+                    savedPiece = currentPiece;
+                    drawSavedPiece();
+                    currentPiece = nextPiece;
+                    drawNextPiece();
+                }
+                break;
         }
     }
 
@@ -353,7 +393,6 @@ document.addEventListener('DOMContentLoaded', () => {
         drawGridAndPiece();
         refreshScore(lineCount);
         requestAnimationFrame(gameLoop);
-        console.log("speedModifier :", speedModifier, "| nbPieces :", nbPieces);
 
     }
 
