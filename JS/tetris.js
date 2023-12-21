@@ -333,8 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
         drawGridAndPiece();
         refreshScore(lineCount);
         requestAnimationFrame(gameLoop);
-        console.log("speedModifier :", speedModifier, "| nbPieces :", nbPieces);
-
     }
 
     currentPiece = new TetrisPiece(getRandomShape(), getRandomColor());
