@@ -24,6 +24,7 @@ body {
      margin : 10px;
  }
 
+
 .container-column {
     display:flex;
     flex-direction : column;
@@ -46,3 +47,11 @@ body {
     padding:10px;
     text-align: center;
 }
+h3 {
+    margin : 10px
+}
+
+p {
+    padding-right :10px;
+    margin: 0;
+    }

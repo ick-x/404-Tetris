@@ -10,13 +10,25 @@
 <div class=container-column>
     <h1 id="displayScore" class="score"></h1>
     <div class="container-row">
-
-        <div id="nextPieceContainer">
-            <canvas id="nextPieceCanvas" width="120" height="120" class="grid"></canvas>
+        <div class=container-column>
+            <div id="nextPieceContainer">
+                <h3>Prochaine Pièce :</h3>
+                <canvas id="nextPieceCanvas" width="120" height="120" class="grid"></canvas>
+            </div>
+            <h2>Comment Jouer ?</h2>
+            <p>Faire tourner la pièce : Z ou Flèche du haut</p>
+            <p>Bouger à Gauche : Q et Flèche de gauche</p>
+            <p>Bouger à Droite : D et Flèche de droite</p>
+            <p>accélérer la descente de la pièce : S ou flèche du bas </p>
+            <p>Faire tomber la pièce au plus bas : Espace</p>
+            <p>Sauvegarder une pièce : R</p>
         </div>
         <canvas id="tetrisCanvas" class="grid" width="300" height="600"></canvas>
+        <br>
 
         <div id="savedPieceContainer">
+
+            <h3>Pièce sauvegardée :</h3>
             <canvas id="savedPieceCanvas" width="120" height="120" class="grid"></canvas>
         </div>
     </div>
