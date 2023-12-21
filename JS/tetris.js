@@ -277,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleKeyPress(event) {
         switch (event.code) {
-            case 'ArrowLeft':
+            case 'ArrowLeft' :
                 currentPiece.moveLeft();
                 if (collision()) currentPiece.moveRight();
                 break;
@@ -297,9 +297,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentPiece.rotate();
                 if (collision()) currentPiece.rotate();
                 break;
+            case 'KeyA' :
+                currentPiece.moveLeft();
+                if (collision()) currentPiece.moveRight();
+                break;
+            case 'KeyD':
+                currentPiece.moveRight();
+                if (collision()) currentPiece.moveLeft();
+                break;
+            case 'KeyS':
+                currentPiece.moveDown();
+                if (collision()) {
+                    mergePiece();
+                    currentPiece = nextPiece;
+                    drawNextPiece();
+                }
+                break;
+            case 'KeyW':
+                currentPiece.rotate();
+                if (collision()) currentPiece.rotate();
+                break;
             case 'Space':
                 while (!collision()) {
-                currentPiece.moveDown()
+                    currentPiece.moveDown()
                 }
                 mergePiece();
                 currentPiece = nextPiece;
@@ -333,6 +353,8 @@ document.addEventListener('DOMContentLoaded', () => {
         drawGridAndPiece();
         refreshScore(lineCount);
         requestAnimationFrame(gameLoop);
+        console.log("speedModifier :", speedModifier, "| nbPieces :", nbPieces);
+
     }
 
     currentPiece = new TetrisPiece(getRandomShape(), getRandomColor());
