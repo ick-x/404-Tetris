@@ -7,33 +7,70 @@
     <link rel="stylesheet" href="../CSS/tetris.css">
 </head>
 <body>
-<div class=container-column>
-    <h1 id="displayScore" class="score"></h1>
+
+<label class="switch">
+    <input type="checkbox" id="backgroundToggle">
+    <span class="slider round"></span>
+</label>
+
+<div class="container-column" id="gameContainer">
+
+    <h1 id="displayScore" class="score">Score: 0</h1>
     <div class="container-row">
-        <div class=container-column>
+        <div class="container-column">
             <div id="nextPieceContainer">
                 <h3>Prochaine Pièce :</h3>
                 <canvas id="nextPieceCanvas" width="120" height="120" class="grid"></canvas>
             </div>
-            <h2>Comment Jouer ?</h2>
-            <p>Faire tourner la pièce : Z ou Flèche du haut</p>
-            <p>Bouger à Gauche : Q et Flèche de gauche</p>
-            <p>Bouger à Droite : D et Flèche de droite</p>
-            <p>accélérer la descente de la pièce : S ou flèche du bas </p>
-            <p>Faire tomber la pièce au plus bas : Espace</p>
-            <p>Sauvegarder une pièce : R</p>
+            <div id="controls" class="container-column">
+                <p>Bouger à Droite: <img id="rightKeyImage" src="../images/Black/RightKey.png" alt="Move Right"></p>
+                <p>Bouger à Gauche: <img id="leftKeyImage" src="../images/Black/LeftKey.png" alt="Move Left"></p>
+                <p>Bouger en Bas: <img id="downKeyImage" src="../images/Black/DownKey.png" alt="Move Down"></p>
+                <p>Faire tourner la Pièce: <img id="upKeyImage" src="../images/Black/UpKey.png" alt="Rotate"></p>
+                <p>Sauvegarder une Pièce: <img id="rKeyImage" src="../images/Black/RKey.png" alt="Save Piece"></p>
+                <p>Descendre au Bas de la Grille: <img id="spaceKeyImage" src="../images/Black/SpaceKey.png" alt="Move to Bottom"></p>
+            </div>
         </div>
         <canvas id="tetrisCanvas" class="grid" width="300" height="600"></canvas>
         <br>
 
         <div id="savedPieceContainer">
-
             <h3>Pièce sauvegardée :</h3>
             <canvas id="savedPieceCanvas" width="120" height="120" class="grid"></canvas>
         </div>
     </div>
 </div>
+
 <script src="../JS/tetris.js"></script>
+<script>
+    const backgroundToggle = document.getElementById('backgroundToggle');
+    const gameContainer = document.getElementById('gameContainer');
+    const rightKeyImage = document.getElementById('rightKeyImage');
+    const leftKeyImage = document.getElementById('leftKeyImage');
+    const downKeyImage = document.getElementById('downKeyImage');
+    const upKeyImage = document.getElementById('upKeyImage');
+    const rKeyImage = document.getElementById('rKeyImage');
+    const spaceKeyImage = document.getElementById('spaceKeyImage');
+
+    backgroundToggle.addEventListener('change', function() {
+        const backgroundColor = this.checked ? 'white' : 'black';
+        const textColor = this.checked ? 'black' : 'white';
+        const borderColor = this.checked ? '1px solid black' : '1px solid white';
+        const keyImagePrefix = this.checked ? 'Black' : 'White';
+
+        document.body.style.backgroundColor = backgroundColor;
+        gameContainer.style.color = textColor;
+        document.getElementById("tetrisCanvas").style.border = borderColor;
+
+        // Met à jour les images des commandes
+        rightKeyImage.src = `../images/${keyImagePrefix}/RightKey.png`;
+        leftKeyImage.src = `../images/${keyImagePrefix}/LeftKey.png`;
+        downKeyImage.src = `../images/${keyImagePrefix}/DownKey.png`;
+        upKeyImage.src = `../images/${keyImagePrefix}/UpKey.png`;
+        rKeyImage.src = `../images/${keyImagePrefix}/RKey.png`;
+        spaceKeyImage.src = `../images/${keyImagePrefix}/SpaceKey.png`;
+    });
+</script>
 
 </body>
 </html>

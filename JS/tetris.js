@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getRandomColor() {
-        const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22'];
+        const colors = ['#b01000', '#0070bb', '#00bb4f', '#b46e00', '#9b59b6', '#1abc9c', '#e67e22'];
         const randomIndex = Math.floor(Math.random() * colors.length);
         return colors[randomIndex];
     }
@@ -353,7 +353,6 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'KeyR':
                 if (savedPiece) {
                     currentPiece = savedPiece;
-                    // Définir la position en haut de la grille
                     currentPiece.row = -currentPiece.shape.length + 1;
                     currentPiece.col = Math.floor(COLUMNS / 2) - Math.floor(currentPiece.shape[0].length / 2);
                     drawGridAndPiece();
