@@ -22,7 +22,6 @@ backgroundToggle.addEventListener('change', function () {
     gameContainer.style.color = textColor;
     document.getElementById("tetrisCanvas").style.border = borderColor;
 
-    // Met à jour les images des commandes
     rightKeyImage.src = `../images/${keyImagePrefix}/RightKey.png`;
     leftKeyImage.src = `../images/${keyImagePrefix}/LeftKey.png`;
     downKeyImage.src = `../images/${keyImagePrefix}/DownKey.png`;

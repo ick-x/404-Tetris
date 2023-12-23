@@ -89,14 +89,12 @@ img {
     margin : 30px;
 }
 
-/* Hide default HTML checkbox */
 .switch input {
     opacity: 0;
     width: 0;
     height: 0;
 }
 
-/* The slider */
 .slider {
     position: absolute;
     cursor: pointer;
@@ -122,11 +120,11 @@ img {
 }
 
 input:checked + .slider {
-    background-color: #2196F3;
+    background-color: rgba(108, 108, 108, 0.56);
 }
 
 input:focus + .slider {
-    box-shadow: 0 0 1px #2196F3;
+    box-shadow: 0 0 1px #9a9a9a;
 }
 
 input:checked + .slider:before {
@@ -135,7 +133,6 @@ input:checked + .slider:before {
     transform: translateX(26px);
 }
 
-/* Rounded sliders */
 .slider.round {
     border-radius: 34px;
 }
