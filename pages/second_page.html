@@ -22,13 +22,59 @@
                 <h3>Prochaine Pièce :</h3>
                 <canvas id="nextPieceCanvas" width="120" height="120" class="grid"></canvas>
             </div>
-            <div id="controls" class="container-column">
-                <p>Bouger à Droite: <img id="rightKeyImage" src="../images/Black/RightKey.png" alt="Move Right"></p>
-                <p>Bouger à Gauche: <img id="leftKeyImage" src="../images/Black/LeftKey.png" alt="Move Left"></p>
-                <p>Bouger en Bas: <img id="downKeyImage" src="../images/Black/DownKey.png" alt="Move Down"></p>
-                <p>Faire tourner la Pièce: <img id="upKeyImage" src="../images/Black/UpKey.png" alt="Rotate"></p>
-                <p>Sauvegarder une Pièce: <img id="rKeyImage" src="../images/Black/RKey.png" alt="Save Piece"></p>
-                <p>Descendre au Bas de la Grille: <img id="spaceKeyImage" src="../images/Black/SpaceKey.png" alt="Move to Bottom"></p>
+            <div id="controls" class="commands container-column">
+                <h2>Comment jouer ?</h2>
+                <div class="container-row command">
+                    <p>Bouger à Droite : </p>
+                    <div class="container-row "><img id="rightKeyImage"
+                                                     src="../images/Black/RightKey.png"
+                                                     alt="Move Right">
+                        <p>ou</p> <img id="DKeyImage" src="../images/Black/DKey.png" alt="Move Right">
+                    </div>
+                </div>
+
+                <div class="container-row command">
+                    <p>Bouger à Gauche : </p>
+                    <div class="container-row"><img id="leftKeyImage"
+                                                            src="../images/Black/LeftKey.png"
+                                                            alt="Move Left">
+                        <p>ou</p> <img id="QKeyImage" src="../images/Black/QKey.png" alt="Move Right">
+                    </div>
+                </div>
+
+                <div class="container-row command">
+                    <p>Bouger en Bas : </p>
+                    <div class="container-row"><img id="downKeyImage"
+                                                            src="../images/Black/DownKey.png"
+                                                            alt="Move Down">
+                        <p>ou</p> <img id="SKeyImage" src="../images/Black/SKey.png" alt="Move Right">
+                    </div>
+                </div>
+
+                <div class="container-row command">
+
+                    <p>Faire tourner la Pièce : </p>
+                    <div class="container-row"><img id="upKeyImage"
+                                                            src="../images/Black/UpKey.png"
+                                                            alt="Rotate">
+                        <p>ou</p> <img id="ZKeyImage" src="../images/Black/ZKey.png" alt="Move Right">
+                    </div>
+                </div>
+                <div class="container-row command">
+
+                    <p>Sauvegarder une Pièce : </p>
+                    <div class="container-row"><img id="rKeyImage"
+                                                            src="../images/Black/RKey.png"
+                                                            alt="Save Piece"></div>
+                </div>
+                <div class="container-row command">
+
+                    <p>Descendre au Bas de la Grille : </p>
+                    <div class="container-row"><img id="spaceKeyImage"
+                                                            src="../images/Black/SpaceKey.png"
+                                                            alt="Move to Bottom">
+                    </div>
+                </div>
             </div>
         </div>
         <canvas id="tetrisCanvas" class="grid" width="300" height="600"></canvas>
@@ -42,35 +88,7 @@
 </div>
 
 <script src="../JS/tetris.js"></script>
-<script>
-    const backgroundToggle = document.getElementById('backgroundToggle');
-    const gameContainer = document.getElementById('gameContainer');
-    const rightKeyImage = document.getElementById('rightKeyImage');
-    const leftKeyImage = document.getElementById('leftKeyImage');
-    const downKeyImage = document.getElementById('downKeyImage');
-    const upKeyImage = document.getElementById('upKeyImage');
-    const rKeyImage = document.getElementById('rKeyImage');
-    const spaceKeyImage = document.getElementById('spaceKeyImage');
-
-    backgroundToggle.addEventListener('change', function() {
-        const backgroundColor = this.checked ? 'white' : 'black';
-        const textColor = this.checked ? 'black' : 'white';
-        const borderColor = this.checked ? '1px solid black' : '1px solid white';
-        const keyImagePrefix = this.checked ? 'Black' : 'White';
-
-        document.body.style.backgroundColor = backgroundColor;
-        gameContainer.style.color = textColor;
-        document.getElementById("tetrisCanvas").style.border = borderColor;
-
-        // Met à jour les images des commandes
-        rightKeyImage.src = `../images/${keyImagePrefix}/RightKey.png`;
-        leftKeyImage.src = `../images/${keyImagePrefix}/LeftKey.png`;
-        downKeyImage.src = `../images/${keyImagePrefix}/DownKey.png`;
-        upKeyImage.src = `../images/${keyImagePrefix}/UpKey.png`;
-        rKeyImage.src = `../images/${keyImagePrefix}/RKey.png`;
-        spaceKeyImage.src = `../images/${keyImagePrefix}/SpaceKey.png`;
-    });
-</script>
+<script src="../JS/darkMode.js"></script>
 
 </body>
 </html>
