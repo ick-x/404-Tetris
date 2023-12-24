@@ -392,6 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     tetrisGrid = newGrid();
                     speedModifier = 1;
                     score = 0;
+                    clearSavedPiece();
                 } else {
                     open("../index.html", "_self");
                 }
