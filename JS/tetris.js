@@ -6,6 +6,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const COLUMNS = 10;
     const BLOCK_SIZE = 30;
 
+    const shapes = {
+        square: [[1, 1], [1, 1]],
+        line: [[1, 1, 1, 1]],
+        T: [[1, 1, 1], [0, 1, 0]],
+        L: [[1, 1, 1], [1, 0, 0]],
+        J: [[1, 1, 1], [0, 0, 1]],
+        S: [[1, 1, 0], [0, 1, 1]],
+        Z: [[0, 1, 1], [1, 1, 0]],
+    };
+
+    const shapeColors = {
+        square: '#eaea00',
+        line: '#00efef',
+        T: '#AA00FF',
+        L: '#FFA500',
+        J: '#0000FF',
+        S: '#01FF00',
+        Z: '#FF0000',
+    };
+
     let tetrisGrid = newGrid();
 
     let currentPiece;
@@ -33,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         context.fillStyle = color;
         context.fillRect(x * blockSize, y * blockSize + padding, blockSize, blockSize);
 
-        context.strokeStyle = '#ffffff';
+            context.strokeStyle = '#ffffff';
         context.lineWidth = 2;
         context.strokeRect(x * blockSize + 1, y * blockSize + padding + 1, blockSize - 2, blockSize - 2);
 
@@ -87,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nextPieceContext.clearRect(0, 0, nextPieceCanvas.width, nextPieceCanvas.height);
 
         const nextShape = getRandomShape();
-        const nextColor = getRandomColor();
+        const nextColor = getRandomColor(nextShape);
 
         nextPiece = new TetrisPiece(nextShape, nextColor);
         nbPieces++;
@@ -124,14 +144,24 @@ document.addEventListener('DOMContentLoaded', () => {
         savedPieceContext.clearRect(0, 0, savedPieceCanvas.width, savedPieceCanvas.height);
     }
 
+    function getRandomColor(shape) {
+        return shapeColors[shape];
+    }
+
+    function createPiece(shape, color) {
+        return {
+            shape: shapes[shape],
+            color: color || getRandomColor(shape),
+        };
+    }
     class TetrisPiece {
         constructor(shape, color) {
             this.frame = 0;
             this.maxFrame = 240;
-            this.shape = shape;
-            this.color = color;
-            this.row = -shape.length + 1;
-            this.col = Math.floor(COLUMNS / 2) - Math.floor(shape[0].length / 2);
+            this.shape = shapes[shape];
+            this.color = color || getRandomColor(shape);
+            this.row = -this.shape.length + 1;
+            this.col = Math.floor(COLUMNS / 2) - Math.floor(this.shape[0].length / 2);
         }
 
         draw() {
@@ -259,25 +289,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getRandomShape() {
-        const shapes = [
-            [[1, 1, 1, 1]],
-            [[1, 1], [1, 1]],
-            [[1, 1, 1], [0, 1, 0]],
-            [[1, 1, 1], [1, 0, 0]],
-            [[1, 1, 1], [0, 0, 1]],
-            [[1, 1, 0], [0, 1, 1]],
-            [[0, 1, 1], [1, 1, 0]],
-        ];
-
+        const shapes = Object.keys(shapeColors);
         const randomIndex = Math.floor(Math.random() * shapes.length);
         return shapes[randomIndex];
     }
 
-    function getRandomColor() {
-        const colors = ['#b01000', '#0070bb', '#00bb4f', '#b46e00', '#9b59b6', '#1abc9c', '#e67e22'];
-        const randomIndex = Math.floor(Math.random() * colors.length);
-        return colors[randomIndex];
-    }
 
     function refreshScore(lineCounter) {
         switch (lineCounter) {
