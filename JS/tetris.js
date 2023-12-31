@@ -201,7 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.col--;
             }
         }
-
         rotate() {
             const oldShape = this.shape;
             const oldRow = this.row;
@@ -213,12 +212,10 @@ document.addEventListener('DOMContentLoaded', () => {
             this.shape = this.shape[0].map((_, i) =>
                 this.shape.map((row) => row[i]).reverse()
             );
-
             this.row = oldRow + centerRow - Math.floor(this.shape.length / 2);
             this.col = oldCol + centerCol - Math.floor(this.shape[0].length / 2);
-
             if (collision()) {
-                this.col = oldCol - 1;
+                recenterToBoard(oldCol);
                 if (collision()) {
                     this.shape = oldShape;
                     this.row = oldRow;
@@ -228,6 +225,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
 
+    }
+    function recenterToBoard(oldCol){
+        const liste = [-1,-2,0,1,2]
+        const initialCol = currentPiece.col;
+        for(let offset of liste){
+            currentPiece.col += offset;
+            if(!collision()){
+                return;
+            }
+            currentPiece.col=initialCol;
+        }
     }
 
     function collision() {
