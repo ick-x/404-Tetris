@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let tetrisGrid = newGrid();
 
+    let pieceIntermediaire;
     let currentPiece;
     let nextPiece;
     let savedPiece;
@@ -107,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nextPieceContext.clearRect(0, 0, nextPieceCanvas.width, nextPieceCanvas.height);
 
         const nextShape = getRandomShape();
-        const nextColor = getRandomColor(nextShape);
+        const nextColor = getColor(nextShape);
 
         nextPiece = new TetrisPiece(nextShape, nextColor);
         nbPieces++;
@@ -125,8 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedPieceCanvas = document.getElementById('savedPieceCanvas');
         const savedPieceContext = savedPieceCanvas.getContext('2d');
 
-        const savedShape = currentPiece.shape;
-        const savedColor = currentPiece.color;
+        const savedColor = savedPiece.color;
 
         savedPiece.shape.forEach((row, i) => {
             row.forEach((col, j) => {
@@ -138,28 +138,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function clearSavedPiece() {
-        savedPiece = null;
         const savedPieceCanvas = document.getElementById('savedPieceCanvas');
         const savedPieceContext = savedPieceCanvas.getContext('2d');
         savedPieceContext.clearRect(0, 0, savedPieceCanvas.width, savedPieceCanvas.height);
     }
 
-    function getRandomColor(shape) {
+    function getColor(shape) {
         return shapeColors[shape];
     }
 
-    function createPiece(shape, color) {
-        return {
-            shape: shapes[shape],
-            color: color || getRandomColor(shape),
-        };
-    }
     class TetrisPiece {
         constructor(shape, color) {
             this.frame = 0;
             this.maxFrame = 240;
             this.shape = shapes[shape];
-            this.color = color || getRandomColor(shape);
+            this.color = color || getColor(shape);
             this.row = -this.shape.length + 1;
             this.col = Math.floor(COLUMNS / 2) - Math.floor(this.shape[0].length / 2);
         }
@@ -376,11 +369,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'KeyR':
                 if (savedPiece) {
+                    clearSavedPiece();
+                    pieceIntermediaire = currentPiece;
                     currentPiece = savedPiece;
+                    savedPiece = pieceIntermediaire;
+                    drawSavedPiece();
                     currentPiece.row = -currentPiece.shape.length + 1;
                     currentPiece.col = Math.floor(COLUMNS / 2) - Math.floor(currentPiece.shape[0].length / 2);
                     drawGridAndPiece();
-                    clearSavedPiece();
+
                 } else {
                     savedPiece = currentPiece;
                     drawSavedPiece();
@@ -420,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }
 
-    currentPiece = new TetrisPiece(getRandomShape(), getRandomColor());
+    currentPiece = new TetrisPiece(getRandomShape(), getColor());
     drawNextPiece();
 
     gameLoop();
