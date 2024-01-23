@@ -12,16 +12,20 @@ const QKeyImage = document.getElementById('QKeyImage');
 const ZKeyImage = document.getElementById('ZKeyImage');
 const SKeyImage = document.getElementById('SKeyImage');
 
+// Background toggle switch
 backgroundToggle.addEventListener('change', function () {
+    // Define styles based on the toggle state
     const backgroundColor = this.checked ? 'black' : 'white';
     const textColor = this.checked ? 'white' : 'black';
     const borderColor = this.checked ? '1px solid white' : '1px solid black';
     const keyImagePrefix = this.checked ? 'White' : 'Black';
 
+    // Apply styles to element
     document.body.style.backgroundColor = backgroundColor;
     gameContainer.style.color = textColor;
     document.getElementById("tetrisCanvas").style.border = borderColor;
 
+    // Update images for controls based
     rightKeyImage.src = `../images/${keyImagePrefix}/RightKey.png`;
     leftKeyImage.src = `../images/${keyImagePrefix}/LeftKey.png`;
     downKeyImage.src = `../images/${keyImagePrefix}/DownKey.png`;
