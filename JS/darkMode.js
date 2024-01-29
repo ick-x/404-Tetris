@@ -14,6 +14,7 @@ const SKeyImage = document.getElementById('SKeyImage');
 
 // Background toggle switch
 backgroundToggle.addEventListener('change', function () {
+    document.activeElement.blur();
     // Define styles based on the toggle state
     const backgroundColor = this.checked ? 'black' : 'white';
     const textColor = this.checked ? 'white' : 'black';
