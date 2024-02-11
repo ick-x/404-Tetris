@@ -1,3 +1,216 @@
+const shapeColors = {
+    square: '#eaea00',
+    line: '#00efef',
+    T: '#AA00FF',
+    L: '#FFA500',
+    J: '#0000FF',
+    S: '#01FF00',
+    Z: '#FF0000',
+};
+
+function collision(grid, x, y, shape) {
+    let height = grid.length;
+    let width = grid.length;
+
+    for (let i = 0; i < shape.length; i++) {
+        for (let j = 0; j < shape[0].length; j++) {
+            if (x + j > -1 && x + j < width && y + i >= 0) {
+                if (shape[i][j] !== 0 && (y + i >= height || grid[y + i][x + j] === false)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+/*test*/
+function findPossibilities(shape, grid) {
+    let differentPieces = getShapesFromPiece(shape);
+    let solutions = Array(differentPieces.length);
+    for(let i = 0; i<differentPieces.length;++i){
+        solutions[i]=findPossibilitiesForShape(differentPieces[i],grid);
+    }
+}
+
+function printGrid(grid) {
+    let str = "[ \n";
+    for (let y = 0; y < grid.length; ++y) {
+        str += "\t[ "
+        for (let x = 0; x < grid[0].length; ++x) {
+            str += grid[y][x] + " ,";
+        }
+        str += "],\n"
+    }
+    str += "]";
+    return str;
+}
+
+function printSolution(newGrid, shape, solution) {
+    grid = Array.from({length : newGrid.length},()=>Array(newGrid[0].length).fill(1));
+
+    let str = "  ";
+    for(let i = 0;i<solution[0].length;++i){
+        currentGrid = copyShape(grid);
+
+        for(let y = 0; y<currentGrid.length;++y){
+            for(let x = 0; x<currentGrid[0].length;++x) {
+                if (newGrid[y][x] === true) {
+                    currentGrid[y][x] = 0;
+                }
+            }
+        }
+        for(let y = 0; y<shape.length;++y){
+            for(let x = 0; x<shape[0].length;++x) {
+                if (shape[y][x] !== 0) {
+                    currentGrid[y+solution[1][i]][x+solution[0][i]] = 2;
+                }
+            }
+        }
+        str+=printGrid(currentGrid);
+    }
+    console.log(str);
+}
+
+function findPossibilitiesForShape(shape, grid) {
+
+    let newGrid = getGridForTreeSearch(grid, shape.length);
+    let solution = Array.from({length:2},()=>Array(0));
+
+    for (let i = 0; i < newGrid.length - shape.length + 1; ++i) {
+        for (let j = 0; j < newGrid[0].length - shape[0].length + 1; ++j) {
+            if (!collision(newGrid, j, i, shape) && collision(newGrid, j, i + 1, shape)) {
+                solution[0].push(j);
+                solution[1].push(i);
+            }
+        }
+    }
+
+    printSolution(newGrid, shape, solution);
+
+    return solution;
+}
+
+function copyShape(shape) {
+    let newShape = Array.from({length: shape.length}, () => Array(shape[0].length).fill(0));
+    for (let y = 0; y < shape.length; ++y) {
+        for (let x = 0; x < shape[0].length; ++x) {
+            newShape[y][x] = shape[y][x];
+        }
+    }
+    return newShape;
+}
+
+function rotateShape(shapeToRotate) {
+    return shapeToRotate[0].map((_, i) =>
+        shapeToRotate.map((row) => row[i]).reverse()
+    );
+}
+
+function areTheSameShape(shape, shape2) {
+    if (shape.length !== shape2.length || shape[0].length !== shape2[0].length) {
+        return false;
+    }
+    for (let y = 0; y < shape.length; ++y) {
+        for (let x = 0; x < shape[0].length; ++x) {
+            if (shape[y][x] !== shape2[y][x]) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+function getShapesFromPiece(shape) {
+    let shapes = Array(4);
+    shapes[0] = copyShape(shape);
+    for (let i = 0; i < 3; ++i) {
+        let shapeToRotate = copyShape(shapes[i]);
+        shapes[i + 1] = rotateShape(shapeToRotate);
+    }
+
+    let deletedShape = 0;
+    for (let i = 0; i < shapes.length - 1; ++i) {
+        let n = shapes.length;
+        for (let j = i + 1; j < n; ++j) {
+            if (areTheSameShape(shapes[i], shapes[j - deletedShape])) {
+                shapes.splice(j - deletedShape, 1);
+                ++deletedShape;
+            }
+        }
+    }
+
+    return shapes;
+}
+
+function getGridForTreeSearch(grid, pieceHeight) {
+    let newGrid = Array.from({length: grid.length}, () => Array(grid[0].length).fill(false));
+    let checked = Array.from({length: grid.length}, () => Array(grid[0].length).fill(false));
+    checkGrid(grid, newGrid, checked, 0, 0);
+
+    let height = grid.length;
+    let width = grid[0].length;
+
+    let i = height - 1;
+    let found = false;
+    for (; i >= 0 && !found; --i) {
+        let isTrueLine = true;
+        for (let j = 0; j < width && isTrueLine; ++j) {
+            isTrueLine = newGrid[i][j] === true;
+        }
+        found = isTrueLine;
+    }
+    if (i + 2 - pieceHeight > 0) {
+        newGrid.splice(0, i + 2 - pieceHeight)
+    }
+    return newGrid;
+}
+
+function checkGrid(grid, newGrid, checked, x, y) {
+    checked[y][x] = true;
+    let height = grid.length;
+    let width = grid[0].length;
+
+    if (grid[y][x] === 0) {
+        newGrid[y][x] = true;
+        for (let i = -1; i < 2; ++i) {
+            for (let j = -1; j < 2; ++j) {
+                if (x + j > -1 && x + j < width && y + i >= 0 && y + i < height) {
+                    if ((i === 0 || j === 0) && i !== j && checked[y + i][x + j] === false) {
+                        checkGrid(grid, newGrid, checked, x + j, y + i);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+let shapesT = {
+    square: [[1, 1], [1, 1]],
+    line: [[1, 1, 1, 1]],
+    T: [[1, 1, 1], [0, 1, 0]],
+    L: [[1, 1, 1], [1, 0, 0]],
+    J: [[1, 1, 1], [0, 0, 1]],
+    S: [[1, 1, 0], [0, 1, 1]],
+    Z: [[0, 1, 1], [1, 1, 0]],
+};
+let gridTest = [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [1, 1, 1, 0, 1],
+    [1, 1, 0, 0, 1],
+    [1, 1, 1, 0, 1],
+];
+//console.log(printGrid(gridTest))
+//console.log( printGrid(getGridForTreeSearch(gridTest, 2)));
+
+console.log(findPossibilities(shapesT.T, gridTest))
+
+
 document.addEventListener('DOMContentLoaded', () => {
     // Get HTML canvas element
     const canvas = document.getElementById('tetrisCanvas');
@@ -49,11 +262,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let timePerFrame = 4;
 
     /**
-     * 
+     *
      * @returns Array - 2D array representing the Tetris grid
      */
     function newGrid() {
-        return Array.from({ length: ROWS }, () => Array(COLUMNS).fill(0));
+        return Array.from({length: ROWS}, () => Array(COLUMNS).fill(0));
     }
 
     /**
@@ -152,6 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
     /**
      * Draws the saved Tetromino on a separate canvas
      */
@@ -182,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Get the color associated with a Tetromino
-     * @param {string} shape - Tetromino shape 
+     * @param {string} shape - Tetromino shape
      * @returns {string} - Color code
      */
     function getColor(shape) {
@@ -195,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
     class TetrisPiece {
         /**
          * Constructor of a Tetromino
-         * @param {string} shape - Tetromino shape 
+         * @param {string} shape - Tetromino shape
          * @param {string} color - Color code
          */
         constructor(shape, color) {
@@ -233,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         /**
-         * Moves the Tetromino down manually 
+         * Moves the Tetromino down manually
          */
         moveDown() {
             this.row++;
@@ -294,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Recenter the tetromino to the board after rotation
      * @param {number} oldCol - Original column position
-     * @returns 
+     * @returns
      */
     function recenterToBoard(oldCol) {
         const liste = [-1, -2, 0, 1, 2]
@@ -415,7 +629,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Handless key presses to control the Tetromino
-     * @param {KeyboardEvent} event - Key press event 
+     * @param {KeyboardEvent} event - Key press event
      */
     function handleKeyPress(event) {
         switch (event.code) {
