@@ -72,6 +72,31 @@ function printSolution(newGrid, shape, solution) {
     console.log(str);
 }
 
+/**
+* Calcul the score of a grid
+* @returns score - 
+*/
+function gridScore() {
+    gridscore = 0;
+    // Go through the grid from bottom to top
+    for (let row = ROWS - 1; row >= 0; row--) {
+        let pieceBlock = 0;
+
+        for (let col = 0; col < COLUMNS; col++) {
+            if (tetrisGrid[row][col] !== 0) {
+                pieceBlock++;
+            }
+        }
+
+        gridscore += pieceBlock * (ROWS - row);
+
+        if (pieceBlock === 0) {
+            break;
+        }
+    }
+    return gridscore;
+}
+
 function findPossibilitiesForShape(shape, grid) {
 
     let newGrid = getGridForTreeSearch(grid, shape.length);
