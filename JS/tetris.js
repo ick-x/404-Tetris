@@ -31,6 +31,7 @@ function findPossibilities(shape, grid) {
     for (let i = 0; i < differentPieces.length; ++i) {
         solutions[i] = findPossibilitiesForShape(differentPieces[i], grid);
     }
+    return solutions;
 }
 
 function printGrid(grid) {
@@ -43,6 +44,7 @@ function printGrid(grid) {
         str += "],\n"
     }
     str += "]";
+    console.log(str)
     return str;
 }
 
@@ -72,34 +74,7 @@ function printSolution(newGrid, shape, solution) {
     console.log(str);
 }
 
-/**
-* Calcul the score of a grid
-* @returns score - 
-*/
-function gridScore() {
-    gridscore = 0;
-    // Go through the grid from bottom to top
-    for (let row = ROWS - 1; row >= 0; row--) {
-        let pieceBlock = 0;
-
-        for (let col = 0; col < COLUMNS; col++) {
-            if (tetrisGrid[row][col] !== 0) {
-                pieceBlock++;
-            }
-        }
-
-        gridscore += pieceBlock * (ROWS - row);
-
-        if (pieceBlock === 0) {
-            break;
-        }
-    }
-    return gridscore;
-}
-
-function findPossibilitiesForShape(shape, grid) {
-
-    let newGrid = getGridForTreeSearch(grid, shape.length);
+function findPossibilitiesForShape(shape, newGrid) {
     let solution = Array.from({length: 2}, () => Array(0));
 
     for (let i = 0; i < newGrid.length - shape.length + 1; ++i) {
@@ -111,7 +86,7 @@ function findPossibilitiesForShape(shape, grid) {
         }
     }
 
-    printSolution(newGrid, shape, solution);
+    //printSolution(newGrid, shape, solution);
 
     return solution;
 }
@@ -165,30 +140,14 @@ function getShapesFromPiece(shape) {
             }
         }
     }
-
     return shapes;
 }
 
-function getGridForTreeSearch(grid, pieceHeight) {
+function getGridForTreeSearch(grid) {
     let newGrid = Array.from({length: grid.length}, () => Array(grid[0].length).fill(false));
     let checked = Array.from({length: grid.length}, () => Array(grid[0].length).fill(false));
+
     checkGrid(grid, newGrid, checked, 0, 0);
-
-    let height = grid.length;
-    let width = grid[0].length;
-
-    let i = height - 1;
-    let found = false;
-    for (; i >= 0 && !found; --i) {
-        let isTrueLine = true;
-        for (let j = 0; j < width && isTrueLine; ++j) {
-            isTrueLine = newGrid[i][j] === true;
-        }
-        found = isTrueLine;
-    }
-    if (i + 2 - pieceHeight > 0) {
-        newGrid.splice(0, i + 2 - pieceHeight)
-    }
     return newGrid;
 }
 
@@ -239,15 +198,12 @@ let gridTest = [
 
 const maxWeight = 999999;
 
-function getMinWeight(gridWeight, gridBoolean, grid) {
-    console.log(printGrid(gridWeight))
-    console.log(printGrid(gridBoolean))
-    console.log(printGrid(grid));
+function getMinWeight(gridWeight, gridLowestPathFound, gridBoolean) {
     let min = maxWeight;
     let coordMin = null;
     for (let i = 0; i < gridWeight.length; ++i) {
         for (let j = 0; j < gridWeight[0].length; ++j) {
-            if (grid[i][j]===0 && !gridBoolean[i][j] && gridWeight[i][j] < min) {
+            if (gridBoolean[i][j] === true && !gridLowestPathFound[i][j] && gridWeight[i][j] < min) {
                 min = gridWeight[j][i];
                 coordMin = Array(2).fill(0);
                 coordMin[0] = j;
@@ -258,28 +214,28 @@ function getMinWeight(gridWeight, gridBoolean, grid) {
     return coordMin;
 }
 
-function recursiveDjikstra(grid, shape, targetX, targetY, gridPreviousX, gridPreviousY, gridWeight, gridBoolean) {
+function recursiveDjikstra(gridBoolean, shape, targetX, targetY, gridPreviousX, gridPreviousY, gridWeight, gridLowestPathFound) {
     let width = gridWeight[0].length;
     let height = gridWeight.length;
-    let coordMin = getMinWeight(gridWeight, gridBoolean, grid);
-    if(coordMin===null){
+    let coordMin = getMinWeight(gridWeight, gridLowestPathFound, gridBoolean);
+    if (coordMin === null) {
         return;
     }
     let minX = coordMin[0];
     let minY = coordMin[1];
 
-    gridBoolean[minY][minX] = true;
+    gridLowestPathFound[minY][minX] = true;
 
-    if (gridBoolean[targetY][targetX] === true) {
+    if (gridLowestPathFound[targetY][targetX] === true) {
         return;
     }
 
     for (let i = -1; i < 2; ++i) {
         for (let j = -1; j < 2; ++j) {
             if (minX + j >= 0 && minX + j < width && minY + i >= 0 && minY + i < height) {
-                if((i===0||j===0)&&i!==j){
-                    if (grid[minY + i][minX + j] === 0 && !gridBoolean[minY + i][minX + j] && gridWeight[minY + i][minX + j] > gridWeight[minY][minX] + 1) {
-                        if (!collision(grid, minX + j, minY + i, shape)) {
+                if ((i === 0 || j === 0) && i !== j) {
+                    if (gridBoolean[minY + i][minX + j] === true && !gridLowestPathFound[minY + i][minX + j] && gridWeight[minY + i][minX + j] > gridWeight[minY][minX] + 1) {
+                        if (!collision(gridBoolean, minX + j, minY + i, shape)) {
                             gridWeight[minY + i][minX + j] = gridWeight[minY][minX] + 1;
                             gridPreviousX[minY + i][minX + j] = minX;
                             gridPreviousY[minY + i][minX + j] = minY;
@@ -290,18 +246,18 @@ function recursiveDjikstra(grid, shape, targetX, targetY, gridPreviousX, gridPre
         }
     }
 
-    recursiveDjikstra(grid, shape, targetX, targetY, gridPreviousX, gridPreviousY, gridWeight, gridBoolean);
+    recursiveDjikstra(gridBoolean, shape, targetX, targetY, gridPreviousX, gridPreviousY, gridWeight, gridLowestPathFound);
 }
 
-function djikstra(grid, shape, initX, initY, targetX, targetY) {
-    let gridPreviousX = Array.from({length: grid.length}, () => Array(grid[0].length).fill(0));
-    let gridPreviousY = Array.from({length: grid.length}, () => Array(grid[0].length).fill(0));
-    let gridWeight = Array.from({length: grid.length}, () => Array(grid[0].length).fill(maxWeight));
-    let gridBoolean = Array.from({length: grid.length}, () => Array(grid[0].length).fill(false));
+function djikstra(gridBoolean, shape, initX, initY, targetX, targetY) {
+    let gridPreviousX = Array.from({length: gridBoolean.length}, () => Array(gridBoolean[0].length).fill(0));
+    let gridPreviousY = Array.from({length: gridBoolean.length}, () => Array(gridBoolean[0].length).fill(0));
+    let gridWeight = Array.from({length: gridBoolean.length}, () => Array(gridBoolean[0].length).fill(maxWeight));
+    let gridLowestPathFound = Array.from({length: gridBoolean.length}, () => Array(gridBoolean[0].length).fill(false));
 
     gridWeight[initY][initX] = 0;
 
-    recursiveDjikstra(grid, shape, targetX, targetY, gridPreviousX, gridPreviousY, gridWeight, gridBoolean);
+    recursiveDjikstra(gridBoolean, shape, targetX, targetY, gridPreviousX, gridPreviousY, gridWeight, gridLowestPathFound);
 
     return gridWeight;
 }
@@ -318,15 +274,64 @@ let gridTest2 = [
 let shapesT2 = {
     square: [[1, 1], [1, 1]],
     line: [[1, 1, 1, 1]],
-    T: [[0, 1],[1, 1], [0, 1]],
+    T: [[0, 1], [1, 1], [0, 1]],
     L: [[1, 1, 1], [1, 0, 0]],
     J: [[1, 1, 1], [0, 0, 1]],
     S: [[1, 1, 0], [0, 1, 1]],
     Z: [[0, 1, 1], [1, 1, 0]],
 };
 
-console.log(printGrid(djikstra(gridTest, shapesT2.T, 0, 0, 2, 4)));
+function treeSearch(grid, shape1, shape2, x1, y1, x2, y2) {
+    let booleanGrid = getGridForTreeSearch(grid);
+    let shapes1 = getShapesFromPiece(shape1);
+    let possibilities1 = Array(shapes1.length);
+    for (let i = 0; i < shapes1.length; ++i) {
+        possibilities1[i] = findPossibilitiesForShape(shapes1[i], booleanGrid);
+    }
+    let nbPossibilities1 = 0;
+    for (let i = 0; i < possibilities1.length; ++i) {
+        let nbDelete = 0;
+        for (let j = 0; j < possibilities1[i][0].length; j) {
+            let gridDjikstra = djikstra(booleanGrid, shapes1[i], x1, y1, possibilities1[i][0][j], possibilities1[i][1][j]);
+            if (gridDjikstra[possibilities1[i][1][j]][possibilities1[i][0][j]] === maxWeight) {
+                possibilities1[i].splice(j - nbDelete, 1);
+                ++nbDelete;
+            } else {
+                ++nbPossibilities1;
+            }
+        }
+    }
+    let newGrids = Array(nbPossibilities1);
+    let ct = 0;
+    for (let i = 0; i < possibilities1.length; ++i) {
+        for (let j = 0; j < possibilities1[i][0].length; ++j) {
+            let newGrid = Array.from({length: grid.length}, () => Array(grid[0].length).fill(false));
+            for (let y = 0; y < newGrid.length; ++y) {
+                for (let x = 0; x < newGrid[0].length; ++x) {
+                    newGrid[y][x] = booleanGrid[y][x];
+                }
+            }
+            for (let y = 0; y < shape1.length; ++y) {
+                for (let x = 0; x < shape1[0].length; ++x) {
+                    if (shape1[y][x] === 1) {
+                        newGrid[y + possibilities1[i][1][j]][x + possibilities1[i][0][j]] = false;
+                    }
+                }
+            }
+            newGrids[ct] = newGrid;
+            ++ct;
+        }
+    }
+    //console.log("ici");
+    for (let i = 0; i < newGrids.length; ++i) {
+        console.log(printGrid(newGrids[i]));
+    }
+}
 
+
+//console.log(printGrid(djikstra(getGridForTreeSearch(gridTest), shapesT2.T, 0, 0, 2, 4)));
+
+treeSearch(gridTest, shapesT.T, null, 0, 0, null, null)
 
 document.addEventListener('DOMContentLoaded', () => {
     // Get HTML canvas element
