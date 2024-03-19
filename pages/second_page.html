@@ -8,12 +8,23 @@
 </head>
 <body>
 
-<label class="switch">
-    <input type="checkbox" id="backgroundToggle">
-    <span class="slider round"></span>
-</label>
-
+    
 <div class="container-column" id="gameContainer">
+    <div class="dark-column" id="darkModeTogglerContainer">
+        <h3>Activer le mode sombre</h3>
+        <label class="switch mt-3">
+            <input type="checkbox" id="backgroundToggle">
+            <span class="slider round"></span>
+        </label>
+    </div>
+    
+    <div class="ai-column" id="aiTogglerContainer">
+        <h3>Activer l'IA</h3>
+        <label class="switch mt-3">
+            <input type="checkbox" id="aiToggle">
+            <span class="slider round"></span>
+        </label>
+    </div>
 
     <h1 id="displayScore" class="score">Score: 0</h1>
     <div class="container-row">

@@ -35,7 +35,6 @@ p {
 .container-column {
     display: flex;
     flex-direction: column;
-
 }
 
 .container-row {
@@ -139,4 +138,18 @@ input:checked + .slider:before {
 
 .slider.round:before {
     border-radius: 50%;
+}
+
+.mt-3 {
+    margin-top: 3rem;
+}
+
+.ai-column {
+    left: 0;
+    position: absolute;
+}
+
+.dark-column {
+    right: 0;
+    position: absolute;
 }
