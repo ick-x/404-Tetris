@@ -331,7 +331,8 @@ function treeSearch(grid, shape1, shape2, x1, y1, x2, y2) {
 
 //console.log(printGrid(djikstra(getGridForTreeSearch(gridTest), shapesT2.T, 0, 0, 2, 4)));
 
-treeSearch(gridTest, shapesT.T, null, 0, 0, null, null)
+//TODO remove comment when tree search works
+//treeSearch(gridTest, shapesT.T, null, 0, 0, null, null)
 
 document.addEventListener('DOMContentLoaded', () => {
     // Get HTML canvas element
