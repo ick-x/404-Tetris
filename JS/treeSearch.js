@@ -1,5 +1,4 @@
-
-class Node {
+class Node  {
     piece
     grid
     nodes
@@ -17,13 +16,14 @@ class Node {
     }
 
     buildNodes(depth, piece) {
+        console.log(this)
         if (depth === 0) {
             let variants = piece.getVariants()
             for (let i = 0; i < variants.length; ++i) {
                 let possibilities = this.getPossibilitiesFromPiece(variants[i])
                 for (let j = 0; j < possibilities.length; ++j) {
                     if (new TetrisDjikstra(this.grid, variants[i], possibilities[j].getCoords()).recursiveDjikstra()) {
-                        this.nodes.push(new Node(variants[i], possibilities[j], this.grid, this.originalGrid,this))
+                        this.nodes.push(new Node(variants[i], possibilities[j], this.grid, this.originalGrid, this))
                     }
                 }
             }
@@ -49,6 +49,7 @@ class Node {
             return response
         }
     }
+
     getLastNodes() {
         if (this.nodes.length === 0) {
             return [this]
@@ -170,7 +171,7 @@ class GridEvaluator {
 
     evaluateGrid(grid) {
         let bumpinessAndHeight = this.evaluateBumpinessAndHeight(grid)
-        //let line = this.evaluateLine(grid)
+        let line = this.evaluateLine(grid)
         //let hole = this.evaluateHole(grid)
 
         return bumpinessAndHeight
@@ -199,7 +200,20 @@ class GridEvaluator {
             }
         }
 
-        return  sumDif * this.coefBumpiness + sumHeights * this.coefHeights
+        return sumDif * this.coefBumpiness + sumHeights * this.coefHeights
+    }
+
+    evaluateLine(grid) {
+        let ct = 0
+        for (let y = 0; y < grid.length; ++i) {
+            let boolLine = true
+            for (let x = 0; x < grid[0].length && boolLine; ++x) {
+                boolLine = boolLine && grid[y][x]
+            }
+            if (boolLine)
+                ++ct
+        }
+        return ct * this.coefLine
     }
 }
 
@@ -272,6 +286,7 @@ class TreeSearch {
     getGrids() {
         return this.node.getGrids()
     }
+
 }
 
 /*
@@ -287,80 +302,6 @@ let gridTest = [
     [0, 1, 1, 0, 1],
 ];
 
-function printGrid(grid) {
-    let str = "[ \n";
-    for (let y = 0; y < grid.length; ++y) {
-        str += "\t[ "
-        for (let x = 0; x < grid[0].length; ++x) {
-            str += "\t" + grid[y][x] + " ,";
-        }
-        str += "],\n"
-    }
-    str += "]";
-    return str;
-}
-
-
-let pieceTest = new Piece(new PieceShape([[false, true], [true, true], [false, true]]), 0, 0)
-
-let ts = new TreeSearch([pieceTest, pieceTest, pieceTest], gridTest)
-ts.buildTree()
-console.log(ts)
-
-let ct = 0
-let ct2 = 0
-for (let i = 0; i < ts.node.nodes.length; ++i) {
-    for (let j = 0; j < ts.node.nodes[i].nodes.length; ++j) {
-        if( ts.node.nodes[i].nodes[j].nodes.length===0)
-            ++ct2
-        for (let k = 0; k < ts.node.nodes[i].nodes[j].nodes.length; ++k) {
-            ++ct
-            console.log(printGrid(ts.node.nodes[i].nodes[j].nodes[k].getNewGrid()))
-        }
-    }
-}
-
-console.log(ts.getGrids().length)
-console.log(ct)
-console.log(ct2)
-
-
-let gridTest = [
-    [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0],
-    [1, 1, 0, 0, 1],
-    [1, 1, 0, 0, 1],
-    [0, 1, 1, 0, 1],
-];
-let gridTestBoolean = [
-    [false, false, false, false, false],
-    [false, false, false, false, false],
-    [false, false, false, false, false],
-    [true, false, false, false, false],
-    [false, true, false, false, true],
-    [false, true, false, false, true],
-    [false, true, true, false, true]
-];//11+
-
-console.log(printGrid(gridTestBoolean))
-console.log(new GridEvaluator(1,1,1,1).evaluateBumpinessAndHeight(gridTestBoolean))
-
-function printGrid(grid) {
-    let str = "[ \n";
-    for (let y = 0; y < grid.length; ++y) {
-        str += "\t[ "
-        for (let x = 0; x < grid[0].length; ++x) {
-            str += "\t" + grid[y][x] + " ,";
-        }
-        str += "],\n"
-    }
-    str += "]";
-    return str;
-}
-
-
 let pieceTest = new Piece(new PieceShape([[false, true], [true, true], [false, true]]), 0, 0)
 
 let ts = new TreeSearch([pieceTest, pieceTest], gridTest)
@@ -374,17 +315,18 @@ let ct2 = 0
 for (let i = 0; i < ts.node.nodes.length; ++i) {
     for (let j = 0; j < ts.node.nodes[i].nodes.length; ++j) {
         ++ct
-            console.log(printGrid(ts.node.nodes[i].nodes[j].getNewGrid()))
+        console.log(printGrid(ts.node.nodes[i].nodes[j].getNewGrid()))
     }
 }
-let gridEvaluatorTest = new GridEvaluator(-51,-18,1,1)
+let gridEvaluatorTest = new GridEvaluator(-51, -18, 76, -35)
 let nodes = ts.node.getLastNodes()
 let max = gridEvaluatorTest.evaluateGrid(nodes[0].originalGrid)
 let idMax = 0
-for(let i = 1; i<nodes.length;++i){
+
+for (let i = 1; i < nodes.length; ++i) {
     let currentScore = gridEvaluatorTest.evaluateGrid(nodes[i].originalGrid)
     console.log(currentScore)
-    if(currentScore>max){
+    if (currentScore > max) {
         max = currentScore
         idMax = i
     }
@@ -394,14 +336,14 @@ console.log(printGrid(nodes[idMax].getNewGrid()))
 console.log(max)
 
 console.log(gridEvaluatorTest.evaluateGrid([
-    [false, false, false, false, false],
-    [false, false, false, false, false],
-    [false, false, false, false, false],
-    [true, true, true, true, false],
-    [false, true, true, true, true],
-    [false, true, true, true, true],
-    [false, true, true, true, true]
-]
+        [false, false, false, false, false],
+        [false, false, false, false, false],
+        [false, false, false, false, false],
+        [false, true, true, true, false],
+        [true, true, true, true, true],
+        [true, true, true, true, true],
+        [false, true, true, true, true]
+    ]
 ))
 
  */

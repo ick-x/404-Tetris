@@ -1,3 +1,744 @@
+function printGrid(grid) {
+    let str = "[ \n";
+    for (let y = 0; y < grid.length; ++y) {
+        str += y + "\t[ "
+        for (let x = 0; x < grid[0].length; ++x) {
+            str += "\t" + grid[y][x] + " ,";
+        }
+        str += "],\n"
+    }
+    str += "]";
+    return str;
+}
+
+class Coords {
+    x
+    y
+
+    constructor(x, y) {
+        this.x = x
+        this.y = y
+    }
+
+    equals(otherCoords) {
+        return this.x === otherCoords.x && this.y === otherCoords.y
+    }
+}
+
+class PieceShape {
+    booleanGrid
+
+    constructor(booleanGrid) {
+        this.booleanGrid = booleanGrid
+    }
+
+    copy() {
+        let newGrid = Array.from({length: this.booleanGrid.length}, () => Array(this.booleanGrid[0].length).fill(false));
+
+        for (let y = 0; y < this.booleanGrid.length; ++y) {
+            for (let x = 0; x < this.booleanGrid[0].length; ++x) {
+                newGrid[y][x] = this.booleanGrid[y][x];
+            }
+        }
+
+        return new PieceShape(newGrid);
+    }
+
+    rotate() {
+        this.booleanGrid = this.booleanGrid[0].map((_, i) =>
+            this.booleanGrid.map((row) => row[i]).reverse()
+        );
+    }
+
+    equals(otherPieceShape) {
+        if (this.booleanGrid.length !== otherPieceShape.booleanGrid.length || this.booleanGrid[0].length !== otherPieceShape.booleanGrid[0].length) {
+            return false
+        }
+
+        for (let y = 0; y < this.booleanGrid.length; ++y) {
+            for (let x = 0; x < this.booleanGrid[0].length; ++x) {
+                if (this.booleanGrid[y][x] !== otherPieceShape.booleanGrid[y][x]) {
+                    return false
+                }
+            }
+        }
+
+        return true;
+    }
+}
+
+class Piece {
+    shape
+    coords
+
+    constructor(shape, x, y) {
+        this.coords = new Coords(x, y)
+        this.shape = shape
+    }
+
+    getCoords() {
+        return this.coords
+    }
+
+    rotate(tetrisGrid) {
+        let oldShape = this.shape.copy();
+        let oldY = this.coords.y;
+        let oldX = this.coords.x;
+
+        let centerY = Math.floor(this.shape.booleanGrid.length / 2);
+        let centerX = Math.floor(this.shape.booleanGrid[0].length / 2);
+
+        this.shape.rotate()
+
+        //let newY = oldY + centerY - Math.floor(this.shape.booleanGrid.length / 2);
+        //let newX = oldX + centerX - Math.floor(this.shape.booleanGrid[0].length / 2);
+
+        //this.coords = new Coords(newX, newY)
+    }
+
+    getVariants() {
+        let list = Array(4).fill(0);
+
+        list[0] = this.copy();
+
+        for (let i = 0; i < 3; ++i) {
+            list[i + 1] = list[i].copy();
+            list[i + 1].rotate();
+        }
+
+        let deletedShape = 0;
+        for (let i = 0; i < list.length - 1; ++i) {
+            let n = list.length;
+            for (let j = i + 1; j < n; ++j) {
+                if (list[i].equals(list[j - deletedShape])) {
+                    list.splice(j - deletedShape, 1);
+                    ++deletedShape;
+                }
+            }
+        }
+
+        return list
+
+    }
+
+    equals(otherPiece) {
+        return this.shape.equals(otherPiece.shape) && this.coords.equals(otherPiece.coords)
+    }
+
+    copy() {
+        return new Piece(this.shape.copy(), this.coords.x, this.coords.y)
+    }
+}
+
+class TetrisDjikstra {
+
+    MAX_WEIGHT = 999
+
+    weightGrid
+
+    booleanGrid
+
+    booleanTetrisGrid
+
+    piece
+
+    target
+
+    constructor(grid, piece, target) {
+        this.buildGrids(grid);
+        this.piece = piece
+        this.target = target
+
+        this.weightGrid[piece.coords.y][piece.coords.x] = 0
+    }
+
+    buildGrids(grid) {
+        let width = grid[0].length
+        let height = grid.length
+
+        this.weightGrid = Array.from({length: height}, () => Array(width).fill(this.MAX_WEIGHT))
+        this.booleanGrid = Array.from({length: height}, () => Array(width).fill(false))
+        this.booleanTetrisGrid = Array.from({length: height}, () => Array(width).fill(false))
+
+        for (let y = 0; y < height; ++y) {
+            for (let x = 0; x < width; ++x) {
+                if (grid[y][x] === false) {
+                    this.booleanTetrisGrid[y][x] = true
+                }
+            }
+        }
+    }
+
+    getMinWeightCoords() {
+        let width = this.weightGrid[0].length
+        let height = this.weightGrid.length
+
+        let minWeight = this.MAX_WEIGHT
+        let minCoords
+
+        for (let y = 0; y < height; ++y) {
+            for (let x = 0; x < width; ++x) {
+                if (this.weightGrid[y][x] < minWeight && !this.booleanGrid[y][x]) {
+                    minCoords = new Coords(x, y)
+                    minWeight = this.weightGrid[y][x]
+                }
+            }
+        }
+
+        return minCoords
+    }
+
+    recursiveDjikstra() {
+        let minCoords = this.getMinWeightCoords()
+        if (minCoords == null) {
+            return false
+        }
+        this.booleanGrid[minCoords.y][minCoords.x] = true
+
+        if (this.booleanGrid[this.target.y][this.target.x] === true) {
+            return true
+        }
+
+        for (let y = 0; y <= 1; ++y) {
+            for (let x = -1; x <= 1; ++x) {
+                if ((x === 0 || y === 0) && x !== y) {
+                    let newX = x + minCoords.x
+                    let newY = y + minCoords.y
+                    if (!this.pieceCollidesOrOutOfTheGrid(newX, newY)) {
+                        if (!this.booleanGrid[newY][newX]) {
+                            if (this.weightGrid[newY][newX] > this.weightGrid[minCoords.y][minCoords.x] + 1) {
+                                this.weightGrid[newY][newX] = this.weightGrid[minCoords.y][minCoords.x] + 1
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return this.recursiveDjikstra();
+
+    }
+
+    pieceCollidesOrOutOfTheGrid(x, y) {
+        let height = this.booleanGrid.length
+        let width = this.booleanGrid[0].length
+
+        let shapeGrid = this.piece.shape.booleanGrid
+
+        for (let i = 0; i < shapeGrid.length; ++i) {
+            for (let j = 0; j < shapeGrid[0].length; ++j) {
+                if (shapeGrid[i][j] === true) {
+                    let newX = x + j;
+                    let newY = y + i;
+                    if (newX < 0 || newX >= width || newY >= height) {
+                        return true
+                    }
+                    if (newY > 0 && this.booleanTetrisGrid[newY][newX] === true) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false
+    }
+
+    toString() {
+        return printGrid(this.weightGrid);
+    }
+
+}
+
+class Node {
+    piece
+    grid
+    nodes
+    solutionPiece
+    originalGrid
+    previousNode
+
+    constructor(piece, solutionPiece, grid, originalGrid, previousNode) {
+        this.piece = piece
+        this.grid = grid
+        this.solutionPiece = solutionPiece
+        this.nodes = Array(0)
+        this.buildBooleanGrid(originalGrid)
+        this.previousNode = previousNode
+    }
+
+    buildNodes(depth, piece) {
+        if (depth === 0) {
+            let variants = piece.getVariants()
+            for (let i = 0; i < variants.length; ++i) {
+                let possibilities = this.getPossibilitiesFromPiece(variants[i])
+                for (let j = 0; j < possibilities.length; ++j) {
+                    if (new TetrisDjikstra(this.grid, variants[i], possibilities[j].getCoords()).recursiveDjikstra()) {
+                        this.nodes.push(new Node(variants[i], possibilities[j], this.grid, this.originalGrid, this))
+                    }
+                }
+            }
+        } else {
+            let newDepth = --depth
+            for (let i = 0; i < this.nodes.length; ++i) {
+                this.nodes[i].buildNodes(newDepth, piece)
+            }
+        }
+    }
+
+    getGrids() {
+        if (this.nodes.length === 0) {
+            return [this.grid]
+        } else {
+            let response = Array(0)
+            for (let i = 0; i < this.nodes.length; ++i) {
+                let tempGrids = this.nodes[i].getGrids()
+                for (let j = 0; j < tempGrids.length; ++j) {
+                    response.push(tempGrids[j])
+                }
+            }
+            return response
+        }
+    }
+
+    getLastNodes() {
+        if (this.nodes.length === 0) {
+            return [this]
+        } else {
+            let response = Array(0)
+            for (let i = 0; i < this.nodes.length; ++i) {
+                let tempNodes = this.nodes[i].getLastNodes()
+                for (let j = 0; j < tempNodes.length; ++j) {
+                    response.push(tempNodes[j])
+                }
+            }
+            return response
+        }
+    }
+
+    getPossibilitiesFromPiece(variant) {
+        let possibilities = new Array(0)
+        for (let y = 0; y < this.grid.length; ++y) {
+            for (let x = 0; x < this.grid[0].length; ++x) {
+                if (this.grid[y][x] === true) {
+                    if (this.pieceCollides(variant, x, y + 1) && !this.pieceCollides(variant, x, y)) {
+                        possibilities.push(new Piece(variant.shape, x, y))
+                    }
+                }
+            }
+        }
+        return possibilities;
+    }
+
+    pieceCollides(piece, x, y) {
+        let height = this.grid.length
+        let width = this.grid[0].length
+
+        let shapeGrid = piece.shape.booleanGrid
+
+        for (let i = 0; i < shapeGrid.length; ++i) {
+            for (let j = 0; j < shapeGrid[0].length; ++j) {
+                if (shapeGrid[i][j] === true) {
+                    let newX = x + j;
+                    let newY = y + i;
+                    if (newX < 0 || newX >= width || newY >= height) {
+                        return true
+                    }
+                    if (newY > 0 && this.grid[newY][newX] === false) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false
+    }
+
+    getNewGrid() {
+        let newGrid = Array.from({length: this.grid.length}, () => Array(this.grid[0].length).fill(0))
+        for (let y = 0; y < this.grid.length; ++y) {
+            for (let x = 0; x < this.grid[0].length; ++x) {
+                if (this.grid[y][x] === false) {
+                    newGrid[y][x] = 1
+                }
+            }
+        }
+        for (let y = 0; y < this.solutionPiece.shape.booleanGrid.length; ++y) {
+            for (let x = 0; x < this.solutionPiece.shape.booleanGrid[0].length; ++x) {
+                if (this.solutionPiece.shape.booleanGrid[y][x] === true) {
+                    newGrid[y + this.solutionPiece.coords.y][x + this.solutionPiece.coords.x] = 2
+                }
+            }
+        }
+        return newGrid
+    }
+
+    buildBooleanGrid(originalGrid) {
+        let newRecursiveGrid = Array.from({length: this.grid.length}, () => Array(this.grid[0].length).fill(true))
+        let newOriginalGrid = Array.from({length: this.grid.length}, () => Array(this.grid[0].length).fill(true))
+        for (let y = 0; y < this.grid.length; ++y) {
+            for (let x = 0; x < this.grid[0].length; ++x) {
+                newOriginalGrid[y][x] = originalGrid[y][x]
+                if (this.grid[y][x] === false) {
+                    newRecursiveGrid[y][x] = false
+                }
+            }
+        }
+        if (this.solutionPiece != null) {
+            for (let y = 0; y < this.solutionPiece.shape.booleanGrid.length; ++y) {
+                for (let x = 0; x < this.solutionPiece.shape.booleanGrid[0].length; ++x) {
+                    if (this.solutionPiece.shape.booleanGrid[y][x] === true) {
+                        newRecursiveGrid[y + this.solutionPiece.coords.y][x + this.solutionPiece.coords.x] = false
+                        newOriginalGrid[y + this.solutionPiece.coords.y][x + this.solutionPiece.coords.x] = true
+                    }
+                }
+            }
+        }
+        this.grid = newRecursiveGrid
+        this.originalGrid = newOriginalGrid
+    }
+
+    getDepth(depth) {
+        let ct = 0
+        let current = this
+        while (current.previousNode !== null) {
+            ct++
+            current = current.previousNode
+        }
+        return ct
+    }
+}
+
+class GridEvaluator {
+    coefHeights
+    coefBumpiness
+    coefLine
+    coefHole
+
+    constructor(coefHeights, coefBumpiness, coefLine, coefHole) {
+        this.coefBumpiness = coefBumpiness
+        this.coefLine = coefLine
+        this.coefHole = coefHole
+        this.coefHeights = coefHeights
+    }
+
+
+    evaluateGrid(grid) {
+        let bumpinessAndHeight = this.evaluateBumpinessAndHeight(grid)
+        let line = this.evaluateLine(grid)
+        let hole = this.evaluateHole(grid)
+
+        return bumpinessAndHeight + line + hole
+    }
+
+    evaluateBumpinessAndHeight(grid) {
+        let heights = Array(grid[0].length).fill(0)
+        let sumHeights = 0
+        let sumDif = 0
+        for (let column = 0; column < grid[0].length; ++column) {
+            let ct = 0
+            let ctSinceLastOccupied = 0
+            for (let i = grid.length - 1; i >= 0; --i) {
+                ++ct
+                if (grid[i][column] === true) {
+                    ctSinceLastOccupied = ct
+                }
+            }
+            heights[column] = ctSinceLastOccupied
+        }
+
+        for (let column = 0; column < grid[0].length; ++column) {
+            sumHeights += heights[column]
+            if (column > 0) {
+                sumDif += heights[column - 1] > heights[column] ? heights[column - 1] - heights[column] : heights[column] - heights[column - 1]
+            }
+        }
+
+        return sumDif * this.coefBumpiness + sumHeights * this.coefHeights
+    }
+
+    evaluateLine(grid) {
+        let ct = 0
+        for (let y = 0; y < grid.length; ++y) {
+            let boolLine = true
+            for (let x = 0; x < grid[0].length && boolLine; ++x) {
+                boolLine = boolLine && !grid[y][x]
+            }
+            if (boolLine)
+                ++ct
+        }
+        return ct * this.coefLine
+    }
+
+    evaluateHole(grid) {
+        let nbHole = 0
+
+        let newGrid = this.buildGridForTreeSearch(grid)
+
+        for(let y = 0; y<grid.length;++y){
+            for( let x = 0; x<grid[0].length;++x){
+                if(newGrid[y][x]===grid[y][x]){
+                    ++nbHole
+                }
+            }
+        }
+
+        return nbHole * this.coefHole;
+    }
+
+    buildGridForTreeSearch(booleanGrid) {
+        let newGrid = Array.from({length: booleanGrid.length}, () => Array(booleanGrid[0].length).fill(false));
+        let checked = Array.from({length: booleanGrid.length}, () => Array(booleanGrid[0].length).fill(false));
+
+        this.recursiveGridForTreeSearch(booleanGrid, newGrid, checked, 0, 0);
+        return newGrid;
+    }
+
+    recursiveGridForTreeSearch(booleanGrid, newGrid, checked, x, y) {
+        checked[y][x] = true;
+        let height = booleanGrid.length;
+        let width = booleanGrid[0].length;
+        if (booleanGrid[y][x] === false) {
+            newGrid[y][x] = true
+            for (let i = -1; i < 2; ++i) {
+                for (let j = -1; j < 2; ++j) {
+                    if (x + j >= 0 && x + j < width && y + i >= 0 && y + i < height) {
+                        if ((i === 0 || j === 0) && i !== j && checked[y + i][x + j] === false) {
+                            this.recursiveGridForTreeSearch(booleanGrid, newGrid, checked, x + j, y + i);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+class TreeSearch {
+    booleanGrid
+    recursiveGrid
+    pieces
+    node
+
+    constructor(pieces, grid) {
+        this.pieces = Array.from({length: pieces.length}, () => null)
+        for (let i = 0; i < pieces.length; ++i) {
+            this.pieces[i] = pieces[i]
+        }
+
+
+        let width = grid[0].length
+        let height = grid.length
+        this.booleanGrid = Array.from({length: height}, () => Array(width).fill(false))
+
+        for (let y = 0; y < height; ++y) {
+            for (let x = 0; x < width; ++x) {
+                if (grid[y][x] !== 0) {
+                    this.booleanGrid[y][x] = true
+                }
+            }
+        }
+
+        this.buildGridForTreeSearch()
+    }
+
+    buildTree() {
+        this.node = new Node(null, null, this.recursiveGrid, this.booleanGrid, null)
+        for (let i = 0; i < this.pieces.length; ++i) {
+            this.node.buildNodes(i, this.pieces[i])
+        }
+    }
+
+
+    buildGridForTreeSearch() {
+        let newGrid = Array.from({length: this.booleanGrid.length}, () => Array(this.booleanGrid[0].length).fill(false));
+        let checked = Array.from({length: this.booleanGrid.length}, () => Array(this.booleanGrid[0].length).fill(false));
+
+        this.recursiveGridForTreeSearch(newGrid, checked, 0, 0);
+        this.recursiveGrid = newGrid;
+    }
+
+    recursiveGridForTreeSearch(newGrid, checked, x, y) {
+        checked[y][x] = true;
+        let height = this.booleanGrid.length;
+        let width = this.booleanGrid[0].length;
+        if (this.booleanGrid[y][x] === false) {
+            newGrid[y][x] = true;
+            for (let i = -1; i < 2; ++i) {
+                for (let j = -1; j < 2; ++j) {
+                    if (x + j > -1 && x + j < width && y + i >= 0 && y + i < height) {
+                        if ((i === 0 || j === 0) && i !== j && checked[y + i][x + j] === false) {
+                            this.recursiveGridForTreeSearch(newGrid, checked, x + j, y + i);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    getGrids() {
+        return this.node.getGrids()
+    }
+
+
+    getBestNode() {
+        let nodes = this.node.getLastNodes()
+
+        let gridEvaluatorTest = new GridEvaluator(-51, -18, 76, -35)
+
+        let max = gridEvaluatorTest.evaluateGrid(nodes[0].originalGrid)
+        let maxDepth = nodes[0].getDepth()
+        let idMax = 0
+
+        for (let i = 1; i < nodes.length; ++i) {
+            let currentScore = gridEvaluatorTest.evaluateGrid(nodes[i].originalGrid)
+            if (nodes[i].getDepth() >= maxDepth && currentScore > max) {
+                max = currentScore
+                maxDepth = nodes[i].getDepth()
+                idMax = i
+            }
+        }
+
+        return nodes[idMax]
+
+    }
+}
+
+
+/*
+let gridTest = [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [1, 1, 0, 0, 1],
+    [1, 1, 0, 0, 1],
+    [0, 1, 1, 0, 1],
+];
+
+let pieceTest = new Piece(new PieceShape([[false, true], [true, true], [false, true]]), 0, 0)
+
+let ts = new TreeSearch([pieceTest, pieceTest], gridTest)
+ts.buildTree()
+console.log(printGrid(ts.node.nodes[0].nodes[0].getNewGrid()))
+console.log(printGrid(ts.node.nodes[0].nodes[0].originalGrid))
+console.log((ts.node.getLastNodes()))
+
+let ct = 0
+let ct2 = 0
+for (let i = 0; i < ts.node.nodes.length; ++i) {
+    for (let j = 0; j < ts.node.nodes[i].nodes.length; ++j) {
+        ++ct
+        console.log(printGrid(ts.node.nodes[i].nodes[j].getNewGrid()))
+    }
+}
+let gridEvaluatorTest = new GridEvaluator(-51, -18, 76, -35)
+let nodes = ts.node.getLastNodes()
+let max = gridEvaluatorTest.evaluateGrid(nodes[0].originalGrid)
+let idMax = 0
+
+for (let i = 1; i < nodes.length; ++i) {
+    let currentScore = gridEvaluatorTest.evaluateGrid(nodes[i].originalGrid)
+    console.log(currentScore)
+    if (currentScore > max) {
+        max = currentScore
+        idMax = i
+    }
+}
+console.log(printGrid(nodes[idMax].originalGrid))
+console.log(printGrid(nodes[idMax].getNewGrid()))
+console.log(max)
+
+console.log(gridEvaluatorTest.evaluateGrid([
+        [false, false, false, false, false],
+        [false, false, false, false, false],
+        [false, false, false, false, false],
+        [false, true, true, true, false],
+        [true, true, true, true, true],
+        [true, true, true, true, true],
+        [false, true, true, true, true]
+    ]
+))
+
+
+
+ */
+
+
+
+
+const shapes = [
+    [[true, true], [true, true]],
+    [[true, true, true, true]],
+    [[true, true, true], [false, true, false]],
+    [[true, true, true], [true, false, false]],
+    [[true, true, true], [false, false, true]],
+    [[true, true, false], [false, true, true]],
+    [[false, true, true], [true, true, false]]
+]
+
+function getRandomPiece() {
+    const randomIndex = Math.floor(Math.random() * shapes.length);
+    return new Piece(new PieceShape(shapes[1]), 4, 0)
+}
+
+function newGrid() {
+    return Array.from({length: 20}, () => Array(10).fill(0));
+}
+
+let gridTest = newGrid()
+let currentPiece = getRandomPiece()
+let nextPiece = getRandomPiece()
+let totalLine = 0
+while (!false) {
+
+    console.log(printGrid(gridTest))
+    let treeSearch = new TreeSearch([currentPiece, nextPiece], gridTest)
+    treeSearch.buildTree()
+
+    let node = treeSearch.getBestNode()
+    for (let i = 0; i < node.solutionPiece.shape.booleanGrid.length; ++i) {
+        for (let j = 0; j < node.solutionPiece.shape.booleanGrid[0].length; ++j) {
+            if (node.solutionPiece.shape.booleanGrid[i][j]) {
+                gridTest[node.solutionPiece.coords.y + i][node.solutionPiece.coords.x + j] = 1
+            }
+        }
+    }
+    currentPiece = nextPiece
+    nextPiece = getRandomPiece()
+
+    let ct = 0
+
+    for (let y = gridTest.length - 1; y >= ct; --y) {
+        let boolLine = true
+        for (let x = 0; x < gridTest[0].length && boolLine; ++x) {
+            boolLine = boolLine && gridTest[y - ct][x] === 1
+        }
+        if (boolLine) {
+            ++ct
+            ++totalLine
+            gridTest.splice(y - ct + 1, 1)
+        }
+    }
+
+    newArray = Array(0)
+    for(let i = 0;i<ct;++i){
+        newArray.push(Array(gridTest[0].length).fill(0))
+    }
+    for(let i = 0;i<gridTest.length;++i){
+        newArray.push(gridTest[i])
+    }
+    gridTest = newArray
+    console.log(totalLine)
+}
+
+
+
+let gridTestBis = [
+
+]
+
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
     // Get HTML canvas element
     const canvas = document.getElementById('tetrisCanvas');
