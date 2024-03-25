@@ -76,6 +76,10 @@ class Piece {
         this.shape = shape
     }
 
+    getCoords() {
+        return this.coords
+    }
+
     rotate(tetrisGrid) {
         let oldShape = this.shape.copy();
         let oldY = this.coords.y;
@@ -158,7 +162,7 @@ class TetrisDjikstra {
 
         for (let y = 0; y < height; ++y) {
             for (let x = 0; x < width; ++x) {
-                if (grid[y][x] !== 0) {
+                if (grid[y][x] === false) {
                     this.booleanTetrisGrid[y][x] = true
                 }
             }
@@ -210,7 +214,6 @@ class TetrisDjikstra {
                 }
             }
         }
-
         return this.recursiveDjikstra();
 
     }
@@ -243,11 +246,6 @@ class TetrisDjikstra {
         return printGrid(this.weightGrid);
     }
 
-    log() {
-        console.log(printGrid(this.booleanGrid))
-        console.log(printGrid(this.booleanTetrisGrid))
-        console.log(printGrid(this.weightGrid))
-    }
 }
 
 //test
