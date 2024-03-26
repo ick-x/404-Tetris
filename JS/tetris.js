@@ -255,14 +255,17 @@ class Node {
     solutionPiece
     originalGrid
     previousNode
+    djikstraGrid
 
-    constructor(piece, solutionPiece, grid, originalGrid, previousNode) {
+    constructor(piece, solutionPiece, grid, originalGrid, previousNode, djikstraGrid) {
         this.piece = piece
         this.grid = grid
         this.solutionPiece = solutionPiece
         this.nodes = Array(0)
-        this.buildBooleanGrid(originalGrid)
+        if (originalGrid != null)
+            this.buildBooleanGrid(originalGrid)
         this.previousNode = previousNode
+        this.djikstraGrid = djikstraGrid
     }
 
     buildNodes(depth, piece) {
@@ -271,8 +274,9 @@ class Node {
             for (let i = 0; i < variants.length; ++i) {
                 let possibilities = this.getPossibilitiesFromPiece(variants[i])
                 for (let j = 0; j < possibilities.length; ++j) {
-                    if (new TetrisDjikstra(this.grid, variants[i], possibilities[j].getCoords()).recursiveDjikstra()) {
-                        this.nodes.push(new Node(variants[i], possibilities[j], this.grid, this.originalGrid, this))
+                    let tetrisDjikstra = new TetrisDjikstra(this.grid, variants[i], possibilities[j].getCoords())
+                    if (tetrisDjikstra.recursiveDjikstra()) {
+                        this.nodes.push(new Node(variants[i], possibilities[j], this.grid, this.originalGrid, this, tetrisDjikstra.weightGrid))
                     }
                 }
             }
@@ -399,11 +403,43 @@ class Node {
     getDepth(depth) {
         let ct = 0
         let current = this
-        while (current.previousNode !== null) {
+        while (current.previousNode != null) {
             ct++
             current = current.previousNode
         }
         return ct
+    }
+
+    getNextMove() {
+        let coords = this.solutionPiece.coords
+        let sol = " "
+
+        while (!coords.equals(this.piece.coords)) {
+            let previousPosFound = false;
+            for (let y = -1; y <= 0 && !previousPosFound; ++y) {
+                for (let x = -1; x <= 1 && !previousPosFound; ++x) {
+                    if ((x === 0 || y === 0) && x !== y) {
+                        let newX = x + coords.x
+                        let newY = y + coords.y
+                        if (newX >= 0 && newX < this.grid[0].length && newY >= 0 && newY < this.grid.length) {
+                            if (this.djikstraGrid[newY][newX] < this.djikstraGrid[coords.y][coords.x]) {
+                                if (y === -1) {
+                                    sol = "DOWN"
+                                } else if (x === 1) {
+                                    sol = "LEFT"
+                                } else if (x === -1) {
+                                    sol = "RIGHT"
+                                }
+                                console.log(sol)
+                                coords = new Coords(newX, newY)
+                                previousPosFound = true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return sol
     }
 }
 
@@ -473,9 +509,9 @@ class GridEvaluator {
 
         let newGrid = this.buildGridForTreeSearch(grid)
 
-        for(let y = 0; y<grid.length;++y){
-            for( let x = 0; x<grid[0].length;++x){
-                if(newGrid[y][x]===grid[y][x]){
+        for (let y = 0; y < grid.length; ++y) {
+            for (let x = 0; x < grid[0].length; ++x) {
+                if (newGrid[y][x] === grid[y][x]) {
                     ++nbHole
                 }
             }
@@ -519,29 +555,31 @@ class TreeSearch {
     node
 
     constructor(pieces, grid) {
-        this.pieces = Array.from({length: pieces.length}, () => null)
-        for (let i = 0; i < pieces.length; ++i) {
-            this.pieces[i] = pieces[i]
-        }
-
-
-        let width = grid[0].length
-        let height = grid.length
-        this.booleanGrid = Array.from({length: height}, () => Array(width).fill(false))
-
-        for (let y = 0; y < height; ++y) {
-            for (let x = 0; x < width; ++x) {
-                if (grid[y][x] !== 0) {
-                    this.booleanGrid[y][x] = true
-                }
+        if (pieces != null) {
+            this.pieces = Array.from({length: pieces.length}, () => null)
+            for (let i = 0; i < pieces.length; ++i) {
+                this.pieces[i] = pieces[i]
             }
         }
 
-        this.buildGridForTreeSearch()
+
+        if (grid != null) {
+            let width = grid[0].length
+            let height = grid.length
+            for (let y = 0; y < height; ++y) {
+                for (let x = 0; x < width; ++x) {
+                    if (grid[y][x] !== 0) {
+                        this.booleanGrid[y][x] = true
+                    }
+                }
+            }
+            this.booleanGrid = Array.from({length: height}, () => Array(width).fill(false))
+            this.buildGridForTreeSearch()
+        }
     }
 
     buildTree() {
-        this.node = new Node(null, null, this.recursiveGrid, this.booleanGrid, null)
+        this.node = new Node(null, null, this.recursiveGrid, this.booleanGrid, null, null)
         for (let i = 0; i < this.pieces.length; ++i) {
             this.node.buildNodes(i, this.pieces[i])
         }
@@ -599,6 +637,14 @@ class TreeSearch {
 
         return nodes[idMax]
 
+    }
+
+    getNextMove() {
+        let node = this.getBestNode()
+        while (node.getDepth() > 1) {
+            node = node.previousNode
+        }
+        return node.getNextMove()
     }
 }
 
@@ -662,9 +708,7 @@ console.log(gridEvaluatorTest.evaluateGrid([
 
  */
 
-
-
-
+/*
 const shapes = [
     [[true, true], [true, true]],
     [[true, true, true, true]],
@@ -677,7 +721,7 @@ const shapes = [
 
 function getRandomPiece() {
     const randomIndex = Math.floor(Math.random() * shapes.length);
-    return new Piece(new PieceShape(shapes[1]), 4, 0)
+    return new Piece(new PieceShape(shapes[randomIndex]), 4, 0)
 }
 
 function newGrid() {
@@ -690,11 +734,24 @@ let nextPiece = getRandomPiece()
 let totalLine = 0
 while (!false) {
 
-    console.log(printGrid(gridTest))
+
     let treeSearch = new TreeSearch([currentPiece, nextPiece], gridTest)
     treeSearch.buildTree()
 
-    let node = treeSearch.getBestNode()
+
+    let node = treeSearch.getBestNode().previousNode
+
+    console.log("_______________________________________________________________________")
+    console.log("grid")
+    console.log(printGrid(node.grid))
+    console.log("djikstraGrid")
+    console.log(printGrid(node.djikstraGrid))
+    console.log("originalGrid")
+    console.log(printGrid(node.originalGrid))
+    console.log(node)
+    console.log("_______________________________________________________________________")
+
+
     for (let i = 0; i < node.solutionPiece.shape.booleanGrid.length; ++i) {
         for (let j = 0; j < node.solutionPiece.shape.booleanGrid[0].length; ++j) {
             if (node.solutionPiece.shape.booleanGrid[i][j]) {
@@ -720,24 +777,108 @@ while (!false) {
     }
 
     newArray = Array(0)
-    for(let i = 0;i<ct;++i){
+
+    for (let i = 0; i < ct; ++i) {
         newArray.push(Array(gridTest[0].length).fill(0))
     }
-    for(let i = 0;i<gridTest.length;++i){
+    for (let i = 0; i < gridTest.length; ++i) {
         newArray.push(gridTest[i])
     }
     gridTest = newArray
     console.log(totalLine)
 }
-
-
-
-let gridTestBis = [
+*/
+/*
+let pieceNodeTest = new Piece(new PieceShape([
+    [true, true],
+    [false, true],
+    [false, true]
+]), 4, 0,)
+let solutionPieceNodeTest = new Piece(new PieceShape([
+    [true, true],
+    [false, true],
+    [false, true]
+]), 8, 16,)
+let djikstraGridNodeTest = [
+    [4, 3, 2, 1, 0, 1, 2, 3, 4, 999],
+    [5, 4, 3, 2, 1, 2, 3, 4, 5, 999],
+    [6, 5, 4, 3, 2, 3, 4, 5, 6, 999],
+    [7, 6, 5, 4, 3, 4, 5, 6, 7, 999],
+    [8, 7, 6, 5, 4, 5, 6, 7, 8, 999],
+    [9, 8, 7, 6, 5, 6, 7, 8, 9, 999],
+    [10, 9, 8, 7, 6, 7, 8, 9, 10, 999],
+    [11, 10, 9, 8, 7, 8, 9, 10, 11, 999],
+    [12, 11, 10, 9, 8, 9, 10, 11, 12, 999],
+    [13, 12, 11, 10, 9, 10, 11, 12, 13, 999],
+    [14, 13, 12, 11, 10, 11, 12, 13, 14, 999],
+    [15, 14, 13, 12, 11, 12, 13, 14, 15, 999],
+    [16, 15, 14, 13, 12, 13, 14, 15, 16, 999],
+    [999, 16, 15, 999, 999, 14, 15, 16, 17, 999],
+    [999, 999, 999, 999, 999, 999, 16, 17, 18, 999],
+    [999, 999, 999, 999, 999, 999, 999, 999, 19, 999],
+    [999, 999, 999, 999, 999, 999, 999, 999, 20, 999],
+    [999, 999, 999, 999, 999, 999, 999, 999, 999, 999],
+    [999, 999, 999, 999, 999, 999, 999, 999, 999, 999],
+    [999, 999, 999, 999, 999, 999, 999, 999, 999, 999]
+]
+let originalGridNodeTest = [
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [true, true, false, false, true, true, false, false, false, false],
+    [true, true, true, true, true, true, true, false, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, false, true, true, true]
+]
+let gridNodeTest = [
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [true, true, true, true, true, true, true, true, true, true],
+    [false, false, true, true, false, false, true, true, true, true],
+    [false, false, false, false, false, false, false, true, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false],
+    [false, false, false, false, false, false, false, false, false, false]
 
 ]
 
+let origine = new Node()
+let nodeTest = new Node(pieceNodeTest, solutionPieceNodeTest, gridNodeTest, originalGridNodeTest, origine, djikstraGridNodeTest)
+origine.nodes.push(nodeTest)
+nodeTest.buildNodes(0, pieceNodeTest)
+console.log(nodeTest)
 
+let treeSearchTest = new TreeSearch()
+treeSearchTest.node = origine
+console.log(treeSearchTest)
+console.log(treeSearchTest.getNextMove())
 
+ */
 
 document.addEventListener('DOMContentLoaded', () => {
     // Get HTML canvas element

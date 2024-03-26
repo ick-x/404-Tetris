@@ -1,7 +1,7 @@
 function printGrid(grid) {
     let str = "[ \n";
     for (let y = 0; y < grid.length; ++y) {
-        str += "\t[ "
+        str += y + "\t[ "
         for (let x = 0; x < grid[0].length; ++x) {
             str += "\t" + grid[y][x] + " ,";
         }
@@ -90,10 +90,10 @@ class Piece {
 
         this.shape.rotate()
 
-        let newY = oldY + centerY - Math.floor(this.shape.booleanGrid.length / 2);
-        let newX = oldX + centerX - Math.floor(this.shape.booleanGrid[0].length / 2);
+        //let newY = oldY + centerY - Math.floor(this.shape.booleanGrid.length / 2);
+        //let newX = oldX + centerX - Math.floor(this.shape.booleanGrid[0].length / 2);
 
-        this.coords = new Coords(newX, newY)
+        //this.coords = new Coords(newX, newY)
     }
 
     getVariants() {
