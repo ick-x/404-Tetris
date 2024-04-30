@@ -174,13 +174,6 @@ class Node {
                         let newY = y + coords.y
                         if (newX >= 0 && newX < this.grid[0].length && newY >= 0 && newY < this.grid.length) {
                             if (this.djikstraGrid[newY][newX] < this.djikstraGrid[coords.y][coords.x]) {
-                                if (y === -1) {
-                                    sol = "DOWN"
-                                } else if (x === 1) {
-                                    sol = "LEFT"
-                                } else if (x === -1) {
-                                    sol = "RIGHT"
-                                }
                                 console.log(sol)
                                 coords = new Coords(newX, newY)
                                 previousPosFound = true
@@ -367,7 +360,6 @@ class TreeSearch {
         return this.node.getGrids()
     }
 
-
     getBestNode() {
         let nodes = this.node.getLastNodes()
 
@@ -396,6 +388,60 @@ class TreeSearch {
             node = node.previousNode
         }
         return node.getNextMove()
+    }
+}
+
+class TreeSearchIA{
+    target
+    tetris
+
+
+
+    constructor(pieces, grid, tetris) {
+        let treeSearch = new TreeSearch(pieces, grid)
+        this.tetris = tetris
+        treeSearch.buildTree()
+        let node = treeSearch.getBestNode()
+        if (node.previousNode != null && node.previousNode.previousNode !== null) {
+            this.target = node.previousNode.solutionPiece
+        }else if (node.previousNode !== null ) {
+            this.target = node.target
+        }
+    }
+
+    getNextMove(piece){
+        let djikstra = new TetrisDjikstra(buildBooleanGrid(this.tetris.grid), piece, this.target)
+
+        djikstra.recursiveDjikstra()
+
+        let weightGrid = djikstra.weightGrid
+
+    }
+
+
+    getNextMoveBis(piece, weightGrid) {
+        let coords = this.target.coords
+        let sol = " "
+
+        while (!coords.equals(piece.coords)) {
+            let previousPosFound = false;
+            for (let y = -1; y <= 0 && !previousPosFound; ++y) {
+                for (let x = -1; x <= 1 && !previousPosFound; ++x) {
+                    if ((x === 0 || y === 0) && x !== y) {
+                        let newX = x + coords.x
+                        let newY = y + coords.y
+                        if (newX >= 0 && newX < weightGrid[0].length && newY >= 0 && newY < weightGrid.length) {
+                            if (weightGrid[newY][newX] < weightGrid[coords.y][coords.x]) {
+                                console.log(sol)
+                                coords = new Coords(newX, newY)
+                                previousPosFound = true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return sol
     }
 }
 
