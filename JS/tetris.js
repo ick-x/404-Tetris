@@ -593,7 +593,6 @@ class TreeSearch {
                     }
                 }
             }
-            this.booleanGrid = Array.from({length: height}, () => Array(width).fill(false))
             this.buildGridForTreeSearch()
         }
     }
@@ -637,17 +636,15 @@ class TreeSearch {
     }
 
 
-    getBestNode() {
+    getBestNode(gridEvaluator) {
         let nodes = this.node.getLastNodes()
 
-        let gridEvaluatorTest = new GridEvaluator(-51, -18, 76, -35)
-
-        let max = gridEvaluatorTest.evaluateGrid(nodes[0].originalGrid)
+        let max = gridEvaluator.evaluateGrid(nodes[0].originalGrid)
         let maxDepth = nodes[0].getDepth()
         let idMax = 0
 
         for (let i = 1; i < nodes.length; ++i) {
-            let currentScore = gridEvaluatorTest.evaluateGrid(nodes[i].originalGrid)
+            let currentScore = gridEvaluator.evaluateGrid(nodes[i].originalGrid)
             if (nodes[i].getDepth() >= maxDepth && currentScore > max) {
                 max = currentScore
                 maxDepth = nodes[i].getDepth()
@@ -660,20 +657,28 @@ class TreeSearch {
     }
 }
 
+function adaptGridAndPrint(base){
+    let grid = Array.from({length : base.length}, ()=> Array(base[0].length).fill(0));
+
+    for(let y =0 ;y<base.length;++y){
+        for(let x =0 ;x<base[0].length;++x){
+            if(base[y][x]!==0)grid[y][x] = 1;
+        }
+    }
+    return printGrid(grid)
+}
 
 class TreeSearchIA {
     targetCoords
     targetShape
     alexPiece
-    tetrisGrid
 
 
-    constructor(pieces, grid, alexPiece) {
+    constructor(pieces, grid, alexPiece, gridEvaluator) {
         let treeSearch = new TreeSearch(pieces, grid)
-        this.tetrisGrid = grid
         this.alexPiece = alexPiece
         treeSearch.buildTree()
-        let node = treeSearch.getBestNode()
+        let node = treeSearch.getBestNode(gridEvaluator)
         if (node.previousNode != null && node.previousNode.previousNode !== null) {
             this.targetCoords = node.previousNode.solutionPiece.coords
             this.targetShape = node.previousNode.solutionPiece.shape
@@ -681,19 +686,16 @@ class TreeSearchIA {
             this.targetCoords = node.solutionPiece.coords
             this.targetShape = node.solutionPiece.shape
         }
+
+        console.log(adaptGridAndPrint(grid))
     }
 
-    getNextMove(piece) {
-        let djikstra = new TetrisDjikstra(buildBooleanGridBis(this.tetrisGrid), piece, this.targetCoords, true)
+    getNextMove(piece, tetrisGrid) {
+        let djikstra = new TetrisDjikstra(buildBooleanGridBis(tetrisGrid), piece, this.targetCoords, true)
 
         let bool = djikstra.recursiveDjikstra()
-        if(bool===false){
-            let djikstraBis = new TetrisDjikstra(buildBooleanGridBis(this.tetrisGrid), piece, this.targetCoords, true)
-            console.log(this.targetCoords.x + " ; "+this.targetCoords.y)
-            console.log(printGrid(this.tetrisGrid))
-            console.log(printGrid(djikstraBis.weightGrid))
-            djikstraBis.recursiveDjikstra()
-            console.log(printGrid(djikstraBis.weightGrid))
+        if (bool === false) {
+            return "NO"
         }
 
         let weightGrid = djikstra.weightGrid
@@ -702,22 +704,25 @@ class TreeSearchIA {
 
     }
 
-    updateTetris(alexPiece) {
+    updateTetris(alexPiece, tetrisGrid) {
         let piece = buildPiece(alexPiece)
         if (this.targetShape.equals(piece.shape)) {
-            let move = this.getNextMove(piece)
+            let move = this.getNextMove(piece, tetrisGrid)
 
             switch (move) {
                 case "RIGHT":
                     this.alexPiece.moveRight()
+                    break
+                case "NO":
                     break
                 case "LEFT":
                     this.alexPiece.moveLeft()
                     break
                 case "DOWN":
                     this.alexPiece.moveDown()
+
             }
-        }else{
+        } else {
             alexPiece.rotate()
         }
     }
@@ -762,518 +767,538 @@ function buildPiece(nextPiece) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Get HTML canvas element
-    const canvas = document.getElementById('tetrisCanvas');
-    // 2D Rendering context
-    const context = canvas.getContext('2d');
 
-    // Grid and block size constants
-    const ROWS = 20;
-    const COLUMNS = 10;
-    const BLOCK_SIZE = 30;
 
-    // Define tetromino shapes
-    const shapes = {
-        square: [[1, 1], [1, 1]],
-        line: [[1, 1, 1, 1]],
-        T: [[1, 1, 1], [0, 1, 0]],
-        L: [[1, 1, 1], [1, 0, 0]],
-        J: [[1, 1, 1], [0, 0, 1]],
-        S: [[1, 1, 0], [0, 1, 1]],
-        Z: [[0, 1, 1], [1, 1, 0]],
-    };
+        const defaultGridEvaluator = new GridEvaluator(0, 0, 0, 0)
+        // Get HTML canvas element
+        const canvas = document.getElementById('tetrisCanvas');
+        // 2D Rendering context
+        const context = canvas.getContext('2d');
 
-    // Definition of tetromino color
-    const shapeColors = {
-        square: '#eaea00',
-        line: '#00efef',
-        T: '#AA00FF',
-        L: '#FFA500',
-        J: '#0000FF',
-        S: '#01FF00',
-        Z: '#FF0000',
-    };
+        // Grid and block size constants
+        const ROWS = 20;
+        const COLUMNS = 10;
+        const BLOCK_SIZE = 30;
 
-    // Initialize the Tetris grid
-    let tetrisGrid = newGrid();
+        // Define tetromino shapes
+        const shapes = {
+            square: [[1, 1], [1, 1]],
+            line: [[1, 1, 1, 1]],
+            T: [[1, 1, 1], [0, 1, 0]],
+            L: [[1, 1, 1], [1, 0, 0]],
+            J: [[1, 1, 1], [0, 0, 1]],
+            S: [[1, 1, 0], [0, 1, 1]],
+            Z: [[0, 1, 1], [1, 1, 0]],
+        };
 
-    // Variables to manage current, next, and saved tetris pieces
-    let intermediatePiece;
-    let currentPiece;
-    let nextPiece;
-    let savedPiece;
+        // Definition of tetromino color
+        const shapeColors = {
+            square: '#eaea00',
+            line: '#00efef',
+            T: '#AA00FF',
+            L: '#FFA500',
+            J: '#0000FF',
+            S: '#01FF00',
+            Z: '#FF0000',
+        };
 
-    // Variables to keep track of game state
-    let nbPieces = 1;
-    let speedModifier = 1;
-    let lineCount = 0;
-    let score = 0;
-    let displayScore = document.getElementById("displayScore");
-    let timePerFrame = 4;
+        // Initialize the Tetris grid
+        let tetrisGrid = newGrid();
 
-    let activatedIA = true;
-    let treeSearch
+        // Variables to manage current, next, and saved tetris pieces
+        let intermediatePiece;
+        let currentPiece;
+        let nextPiece;
+        let savedPiece;
 
-    /**
-     *
-     * @returns Array - 2D array representing the Tetris grid
-     */
-    function newGrid() {
-        return Array.from({length: ROWS}, () => Array(COLUMNS).fill(0));
-    }
+        // Variables to keep track of game state
+        let nbPieces = 1;
+        let speedModifier = 1;
+        let lineCount = 0;
+        let score = 0;
+        let displayScore = document.getElementById("displayScore");
+        const aiToggle = document.getElementById('aiToggle');
 
-    /**
-     * Draws a colored square with optional padding
-     * @param {*} x coordinate of the top-left corner of the square
-     * @param {*} y coordinate of the top-left corner of the square
-     * @param {*} color color of the sqaure
-     * @param {*} padding optional padding around the square
-     * @param {*} context optional render context
-     * @param {*} blockSize optional size of each block
-     */
-    function drawSquare(x, y, color, padding = 0, context = null, blockSize = BLOCK_SIZE) {
-        if (context == null) {
-            context = document.getElementById('tetrisCanvas').getContext('2d');
+        let timePerFrame = 4;
+
+        let activatedIA = false;
+        let treeSearch
+
+        /**
+         *
+         * @returns Array - 2D array representing the Tetris grid
+         */
+        function newGrid() {
+            return Array.from({length: ROWS}, () => Array(COLUMNS).fill(0));
         }
 
-        context.fillStyle = color;
-        context.fillRect(x * blockSize, y * blockSize + padding, blockSize, blockSize);
+        /**
+         * Draws a colored square with optional padding
+         * @param {*} x coordinate of the top-left corner of the square
+         * @param {*} y coordinate of the top-left corner of the square
+         * @param {*} color color of the sqaure
+         * @param {*} padding optional padding around the square
+         * @param {*} context optional render context
+         * @param {*} blockSize optional size of each block
+         */
+        function drawSquare(x, y, color, padding = 0, context = null, blockSize = BLOCK_SIZE) {
+            if (context == null) {
+                context = document.getElementById('tetrisCanvas').getContext('2d');
+            }
 
-        context.strokeStyle = '#ffffff';
-        context.lineWidth = 2;
-        context.strokeRect(x * blockSize + 1, y * blockSize + padding + 1, blockSize - 2, blockSize - 2);
+            context.fillStyle = color;
+            context.fillRect(x * blockSize, y * blockSize + padding, blockSize, blockSize);
 
-        context.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-        context.lineWidth = 2;
-        context.beginPath();
-        context.moveTo(x * blockSize + blockSize, y * blockSize + padding);
-        context.lineTo(x * blockSize + blockSize, y * blockSize + blockSize + padding);
-        context.stroke();
-        context.beginPath();
-        context.moveTo(x * blockSize, y * blockSize + blockSize + padding);
-        context.lineTo(x * blockSize + blockSize, y * blockSize + blockSize + padding);
-        context.stroke();
+            context.strokeStyle = '#ffffff';
+            context.lineWidth = 2;
+            context.strokeRect(x * blockSize + 1, y * blockSize + padding + 1, blockSize - 2, blockSize - 2);
 
-    }
+            context.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            context.lineWidth = 2;
+            context.beginPath();
+            context.moveTo(x * blockSize + blockSize, y * blockSize + padding);
+            context.lineTo(x * blockSize + blockSize, y * blockSize + blockSize + padding);
+            context.stroke();
+            context.beginPath();
+            context.moveTo(x * blockSize, y * blockSize + blockSize + padding);
+            context.lineTo(x * blockSize + blockSize, y * blockSize + blockSize + padding);
+            context.stroke();
 
-    /**
-     * Draws the tetris grid and the current Tetromino
-     */
-    function drawGridAndPiece() {
-        // Clear the entire canvas
-        context.clearRect(0, 0, canvas.width, canvas.height);
+        }
 
-        // Draw the Tetris grid
-        for (let row = 0; row < ROWS; row++) {
-            for (let col = 0; col < COLUMNS; col++) {
-                const color = tetrisGrid[row][col];
-                if (color) {
-                    drawSquare(col, row, color);
+        /**
+         * Draws the tetris grid and the current Tetromino
+         */
+        function drawGridAndPiece() {
+            // Clear the entire canvas
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the Tetris grid
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLUMNS; col++) {
+                    const color = tetrisGrid[row][col];
+                    if (color) {
+                        drawSquare(col, row, color);
+                    }
+                    // Draw vertical grid lines
+                    context.beginPath();
+                    context.moveTo(col * BLOCK_SIZE, 0);
+                    context.lineTo(col * BLOCK_SIZE, canvas.height);
+                    context.strokeStyle = 'rgba(220,220,220,0.45)';
+                    context.stroke();
                 }
-                // Draw vertical grid lines
+                // Draw horizontal grid lines
                 context.beginPath();
-                context.moveTo(col * BLOCK_SIZE, 0);
-                context.lineTo(col * BLOCK_SIZE, canvas.height);
+                context.moveTo(0, row * BLOCK_SIZE);
+                context.lineTo(canvas.width, row * BLOCK_SIZE);
                 context.strokeStyle = 'rgba(220,220,220,0.45)';
                 context.stroke();
             }
-            // Draw horizontal grid lines
-            context.beginPath();
-            context.moveTo(0, row * BLOCK_SIZE);
-            context.lineTo(canvas.width, row * BLOCK_SIZE);
-            context.strokeStyle = 'rgba(220,220,220,0.45)';
-            context.stroke();
-        }
 
-        // Draw the current Tetromino
-        if (currentPiece) {
-            currentPiece.draw();
-        }
-    }
-
-    /**
-     * Draws the next Tetromino on a separate canvas
-     */
-    function drawNextPiece() {
-        const nextPieceCanvas = document.getElementById('nextPieceCanvas');
-        const nextPieceContext = nextPieceCanvas.getContext('2d');
-
-        // Clear the "nextPieceCanvas"
-        nextPieceContext.clearRect(0, 0, nextPieceCanvas.width, nextPieceCanvas.height);
-
-        // Get a random Tetromino for the next piece and his color
-        const nextShape = getRandomShape();
-        const nextColor = getColor(nextShape);
-
-        // Instance the new Tetromino with his class
-        nextPiece = new TetrisPiece(nextShape, nextColor);
-        nbPieces++;
-
-        // Draw the new Tetromino on the "nextPieceCanvas"
-        nextPiece.shape.forEach((row, i) => {
-            row.forEach((col, j) => {
-                if (col) {
-                    drawSquare(j, i, nextColor, 0, nextPieceContext, BLOCK_SIZE);
-                }
-            });
-        });
-    }
-
-    /**
-     * Draws the saved Tetromino on a separate canvas
-     */
-    function drawSavedPiece() {
-        const savedPieceCanvas = document.getElementById('savedPieceCanvas');
-        const savedPieceContext = savedPieceCanvas.getContext('2d');
-
-        const savedColor = savedPiece.color;
-
-        // Draw the saved piece on the "savedPieceCanvas"
-        savedPiece.shape.forEach((row, i) => {
-            row.forEach((col, j) => {
-                if (col) {
-                    drawSquare(j, i, savedColor, 0, savedPieceContext, BLOCK_SIZE);
-                }
-            });
-        });
-    }
-
-    /**
-     * Clears the saved Tetromino
-     */
-    function clearSavedPiece() {
-        const savedPieceCanvas = document.getElementById('savedPieceCanvas');
-        const savedPieceContext = savedPieceCanvas.getContext('2d');
-        savedPieceContext.clearRect(0, 0, savedPieceCanvas.width, savedPieceCanvas.height);
-    }
-
-    /**
-     * Get the color associated with a Tetromino
-     * @param {string} shape - Tetromino shape
-     * @returns {string} - Color code
-     */
-    function getColor(shape) {
-        return shapeColors[shape];
-    }
-
-    /**
-     * Class Representing a Tetromino
-     */
-    class TetrisPiece {
-        /**
-         * Constructor of a Tetromino
-         * @param {string} shape - Tetromino shape
-         * @param {string} color - Color code
-         */
-        constructor(shape, color) {
-            this.frame = 0;
-            this.maxFrame = 240;
-            this.shape = shapes[shape];
-            this.color = color || getColor(shape);
-            this.row = -this.shape.length + 1 >= 0 ? -this.shape.length + 1 : 0;
-            this.col = Math.floor(COLUMNS / 2) - Math.floor(this.shape[0].length / 2);
+            // Draw the current Tetromino
+            if (currentPiece) {
+                currentPiece.draw();
+            }
         }
 
         /**
-         * Draws the Tetromino on the principal canvas
+         * Draws the next Tetromino on a separate canvas
          */
-        draw() {
-            this.shape.forEach((row, i) => {
+        function drawNextPiece() {
+            const nextPieceCanvas = document.getElementById('nextPieceCanvas');
+            const nextPieceContext = nextPieceCanvas.getContext('2d');
+
+            // Clear the "nextPieceCanvas"
+            nextPieceContext.clearRect(0, 0, nextPieceCanvas.width, nextPieceCanvas.height);
+
+            // Draw the new Tetromino on the "nextPieceCanvas"
+            nextPiece.shape.forEach((row, i) => {
                 row.forEach((col, j) => {
                     if (col) {
-                        drawSquare(this.col + j, this.row + i, this.color, BLOCK_SIZE * this.frame / this.maxFrame - BLOCK_SIZE);
+                        drawSquare(j, i, nextPiece.color, 0, nextPieceContext, BLOCK_SIZE);
                     }
                 });
             });
         }
 
         /**
-         * Moves the Tetromino down automatically
+         * Draws the saved Tetromino on a separate canvas
          */
-        autoMoveDown() {
-            clearRows();
-            this.frame += speedModifier;
-            if (this.frame >= this.maxFrame) {
+        function drawSavedPiece() {
+            const savedPieceCanvas = document.getElementById('savedPieceCanvas');
+            const savedPieceContext = savedPieceCanvas.getContext('2d');
+
+            const savedColor = savedPiece.color;
+
+            // Draw the saved piece on the "savedPieceCanvas"
+            savedPiece.shape.forEach((row, i) => {
+                row.forEach((col, j) => {
+                    if (col) {
+                        drawSquare(j, i, savedColor, 0, savedPieceContext, BLOCK_SIZE);
+                    }
+                });
+            });
+        }
+
+        /**
+         * Clears the saved Tetromino
+         */
+        function clearSavedPiece() {
+            const savedPieceCanvas = document.getElementById('savedPieceCanvas');
+            const savedPieceContext = savedPieceCanvas.getContext('2d');
+            savedPieceContext.clearRect(0, 0, savedPieceCanvas.width, savedPieceCanvas.height);
+        }
+
+        /**
+         * Get the color associated with a Tetromino
+         * @param {string} shape - Tetromino shape
+         * @returns {string} - Color code
+         */
+        function getColor(shape) {
+            return shapeColors[shape];
+        }
+
+        /**
+         * Class Representing a Tetromino
+         */
+        class TetrisPiece {
+            /**
+             * Constructor of a Tetromino
+             * @param {string} shape - Tetromino shape
+             * @param {string} color - Color code
+             */
+            constructor(shape) {
                 this.frame = 0;
+                this.maxFrame = 240;
+                this.shape = shapes[shape];
+                this.color = getColor(shape);
+                this.row = -this.shape.length + 1 >= 0 ? -this.shape.length + 1 : 0;
+                this.col = Math.floor(COLUMNS / 2) - Math.floor(this.shape[0].length / 2);
+            }
+
+            /**
+             * Draws the Tetromino on the principal canvas
+             */
+            draw() {
+                this.shape.forEach((row, i) => {
+                    row.forEach((col, j) => {
+                        if (col) {
+                            drawSquare(this.col + j, this.row + i, this.color, BLOCK_SIZE * this.frame / this.maxFrame - BLOCK_SIZE);
+                        }
+                    });
+                });
+            }
+
+            /**
+             * Moves the Tetromino down automatically
+             */
+            autoMoveDown() {
+                this.frame += speedModifier * 5 ;
+                if (this.frame >= this.maxFrame) {
+                    this.frame = 0;
+                    this.row++;
+                }
+            }
+
+            /**
+             * Moves the Tetromino down manually
+             */
+            moveDown() {
                 this.row++;
+                this.frame = 0;
             }
-        }
 
-        /**
-         * Moves the Tetromino down manually
-         */
-        moveDown() {
-            this.row++;
-            this.frame = 0;
-        }
-
-        /**
-         * Moves the Tetromino to the left manually
-         */
-        moveLeft() {
-            this.col--;
-            if (collision()) {
-                this.col++;
-            }
-        }
-
-        /**
-         * Moves the Tetromino to the right manually
-         */
-        moveRight() {
-            this.col++;
-            if (collision()) {
+            /**
+             * Moves the Tetromino to the left manually
+             */
+            moveLeft() {
                 this.col--;
-            }
-        }
-
-        /**
-         * Rotate the Tetromino manually
-         */
-        rotate() {
-            const oldShape = this.shape;
-            const oldRow = this.row;
-            const oldCol = this.col;
-
-            const centerRow = Math.floor(this.shape.length / 2);
-            const centerCol = Math.floor(this.shape[0].length / 2);
-
-            // Rotate the shape
-            this.shape = this.shape[0].map((_, i) =>
-                this.shape.map((row) => row[i]).reverse()
-            );
-            this.row = oldRow + centerRow - Math.floor(this.shape.length / 2);
-            this.col = oldCol + centerCol - Math.floor(this.shape[0].length / 2);
-
-            // Check for collision after rotation
-            if (collision()||this.row<0) {
-                recenterToBoard(oldCol);
-                if (collision()||this.row<0) {
-                    // Restore the old shape and position if collision
-                    this.shape = oldShape;
-                    this.row = oldRow;
-                    this.col = oldCol;
+                if (collision()) {
+                    this.col++;
                 }
             }
-        }
-    }
 
-    /**
-     * Recenter the tetromino to the board after rotation
-     * @param {number} oldCol - Original column position
-     * @returns
-     */
-    function recenterToBoard(oldCol) {
-        const liste = [-1, -2, 0, 1, 2]
-        const initialCol = currentPiece.col;
-        for (let offset of liste) {
-            currentPiece.col += offset;
-            if (!collision()) {
-                return;
-            }
-            currentPiece.col = initialCol;
-        }
-    }
-
-    /**
-     * Check for collision between a Tetromino and the filled blocks in the grid
-     * @returns {boolean} - True if collision is detected, false otherwise
-     */
-    function collision() {
-        for (let i = 0; i < currentPiece.shape.length; i++) {
-            for (let j = 0; j < currentPiece.shape[i].length; j++) {
-                if (
-                    currentPiece.row >= 0 && currentPiece.shape[i][j] &&
-                    (tetrisGrid[currentPiece.row + i] &&
-                        tetrisGrid[currentPiece.row + i][currentPiece.col + j]) !== 0
-                ) {
-                    return true;
+            /**
+             * Moves the Tetromino to the right manually
+             */
+            moveRight() {
+                this.col++;
+                if (collision()) {
+                    this.col--;
                 }
             }
-        }
-        return false;
-    }
 
-    /**
-     * Merges the current tetromino into the Tetris grid
-     */
-    function mergePiece() {
-        currentPiece.shape.forEach((row, i) => {
-            row.forEach((col, j) => {
-                if (col) {
-                    if (tetrisGrid[currentPiece.row + i - 1] && tetrisGrid[currentPiece.row + i - 1][currentPiece.col + j] !== undefined) {
-                        tetrisGrid[currentPiece.row + i - 1][currentPiece.col + j] = currentPiece.color;
+            /**
+             * Rotate the Tetromino manually
+             */
+            rotate() {
+                const oldShape = this.shape;
+                const oldRow = this.row;
+                const oldCol = this.col;
+
+                const centerRow = Math.floor(this.shape.length / 2);
+                const centerCol = Math.floor(this.shape[0].length / 2);
+
+                // Rotate the shape
+                this.shape = this.shape[0].map((_, i) =>
+                    this.shape.map((row) => row[i]).reverse()
+                );
+                this.row = oldRow + centerRow - Math.floor(this.shape.length / 2);
+                this.col = oldCol + centerCol - Math.floor(this.shape[0].length / 2);
+
+                // Check for collision after rotation
+                if (collision() || this.row < 0) {
+                    recenterToBoard(oldCol);
+                    if (collision() || this.row < 0) {
+                        // Restore the old shape and position if collision
+                        this.shape = oldShape;
+                        this.row = oldRow;
+                        this.col = oldCol;
                     }
                 }
+            }
+        }
+
+        /**
+         * Recenter the tetromino to the board after rotation
+         * @param {number} oldCol - Original column position
+         * @returns
+         */
+        function recenterToBoard(oldCol) {
+            const liste = [-1, -2, 0, 1, 2]
+            const initialCol = currentPiece.col;
+            for (let offset of liste) {
+                currentPiece.col += offset;
+                if (!collision()) {
+                    return;
+                }
+                currentPiece.col = initialCol;
+            }
+        }
+
+        /**
+         * Check for collision between a Tetromino and the filled blocks in the grid
+         * @returns {boolean} - True if collision is detected, false otherwise
+         */
+        function collision() {
+            for (let i = 0; i < currentPiece.shape.length; i++) {
+                for (let j = 0; j < currentPiece.shape[i].length; j++) {
+                    if (
+                        currentPiece.row >= 0 && currentPiece.shape[i][j] &&
+                        (tetrisGrid[currentPiece.row + i] &&
+                            tetrisGrid[currentPiece.row + i][currentPiece.col + j]) !== 0
+                    ) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Merges the current tetromino into the Tetris grid
+         */
+        function mergePiece() {
+            currentPiece.shape.forEach((row, i) => {
+                row.forEach((col, j) => {
+                    if (col) {
+                        if (tetrisGrid[currentPiece.row + i - 1] && tetrisGrid[currentPiece.row + i - 1][currentPiece.col + j] !== undefined) {
+                            tetrisGrid[currentPiece.row + i - 1][currentPiece.col + j] = currentPiece.color;
+                        }
+                    }
+                });
             });
-        });
-    }
-
-    /**
-     * Clears completed rows from the Tetris grid
-     */
-    function clearRows() {
-        for (let row = ROWS - 1; row >= 0; row--) {
-            if (tetrisGrid[row].every((col) => col !== 0)) {
-                tetrisGrid.splice(row, 1);
-                tetrisGrid.unshift(Array(COLUMNS).fill(0));
-                lineCount++;
-            }
         }
-    }
 
-    /**
-     * Update the game state and checks for game
-     */
-    function update() {
-        checkGameOver();
-        displayScore.innerHTML = "Score : " + score;
+        /**
+         * Clears completed rows from the Tetris grid
+         */
+        function clearRows() {
 
-        if (currentPiece) {
-            currentPiece.autoMoveDown();
-
-            if (collision()) {
-                mergePiece();
-                currentPiece = nextPiece;
-                drawNextPiece();
-                if (activatedIA) {
-                    treeSearch = new TreeSearchIA([buildPiece(currentPiece), buildPiece(nextPiece)], tetrisGrid, currentPiece)
+            for (let y = 0; y < tetrisGrid.length; ++y) {
+                let boolLine = true
+                for (let x = 0; x < tetrisGrid[0].length && boolLine; ++x) {
+                    boolLine = tetrisGrid[y][x] !== 0
                 }
-            } else if (activatedIA) {
-                treeSearch.updateTetris(currentPiece)
+                if (boolLine) {
+                    tetrisGrid.splice(y, 1)
+                    tetrisGrid.unshift(Array(tetrisGrid[0].length).fill(0))
+                    ++lineCount
+                }
             }
         }
-        // Added speed every 25 Tetromino
-        if (nbPieces === 25) {
-            nbPieces = 0;
-            speedModifier++;
-        }
-    }
 
-    /**
-     * Gets a random Tetris shape
-     * @returns {string} - Random Tetris shape
-     */
-    function getRandomShape() {
-        const shapes = Object.keys(shapeColors);
-        const randomIndex = Math.floor(Math.random() * shapes.length);
-        return shapes[randomIndex];
-    }
+        /**
+         * Update the game state and checks for game
+         */
+        function update() {
+            displayScore.innerHTML = "Score : " + score;
 
-    /**
-     * Updates the score based on the number of cleared lines
-     * @param {number} lineCounter - number of lines cleared
-     */
-    function refreshScore(lineCounter) {
-        switch (lineCounter) {
-            case 1:
-                score += 40;
-                lineCount = 0;
-                break;
-            case 2:
-                score += 100;
-                lineCount = 0;
-                break;
-            case 3:
-                score += 300;
-                lineCount = 0;
-                break;
-            case 4:
-                score += 1200;
-                lineCount = 0;
-                break;
-        }
-    }
+            if (currentPiece) {
+                currentPiece.autoMoveDown();
 
-    /**
-     * Handless key presses to control the Tetromino
-     * @param {KeyboardEvent} event - Key press event
-     */
-    function handleKeyPress(event) {
-        switch (event.code) {
-            case 'ArrowLeft':
-                currentPiece.moveLeft();
-                if (collision()) currentPiece.moveRight();
-                break;
-            case 'ArrowRight':
-                currentPiece.moveRight();
-                if (collision()) currentPiece.moveLeft();
-                break;
-            case 'ArrowDown':
-                currentPiece.moveDown();
                 if (collision()) {
+                    mergePiece();
+
+                    currentPiece = nextPiece;
+                    nextPiece = new TetrisPiece(getRandomShape());
+                    nbPieces++;
+
+                    drawNextPiece();
+
+                    if (activatedIA) {
+                        treeSearch = new TreeSearchIA([buildPiece(currentPiece), buildPiece(nextPiece)], tetrisGrid, currentPiece, defaultGridEvaluator)
+                    }
+                }
+                else if (activatedIA) {
+                    treeSearch.updateTetris(currentPiece, tetrisGrid)
+                }
+            }
+
+            // Added speed every 25 Tetromino
+            if (nbPieces === 25) {
+                nbPieces = 0;
+                speedModifier++;
+            }
+
+            clearRows()
+
+            return !checkGameOver();
+        }
+
+        /**
+         * Gets a random Tetris shape
+         * @returns {string} - Random Tetris shape
+         */
+        function getRandomShape() {
+            const shapes = Object.keys(shapeColors);
+            const randomIndex = Math.floor(Math.random() * shapes.length);
+            return shapes[randomIndex];
+        }
+
+        /**
+         * Updates the score based on the number of cleared lines
+         * @param {number} lineCounter - number of lines cleared
+         */
+        function refreshScore(lineCounter) {
+            switch (lineCounter) {
+                case 1:
+                    score += 40;
+                    break;
+                case 2:
+                    score += 100;
+                    break;
+                case 3:
+                    score += 300;
+                    break;
+                case 4:
+                    score += 1200;
+                    break;
+            }
+            lineCount = 0
+        }
+
+        /**
+         * Handless key presses to control the Tetromino
+         * @param {KeyboardEvent} event - Key press event
+         */
+        function handleKeyPress(event) {
+            switch (event.code) {
+                case 'ArrowLeft':
+                    currentPiece.moveLeft();
+                    if (collision()) currentPiece.moveRight();
+                    break;
+                case 'ArrowRight':
+                    currentPiece.moveRight();
+                    if (collision()) currentPiece.moveLeft();
+                    break;
+                case 'ArrowDown':
+                    currentPiece.moveDown();
+                    if (collision()) {
+                        mergePiece();
+                        currentPiece = nextPiece;
+                        drawNextPiece();
+                    }
+                    break;
+                case 'ArrowUp':
+                    currentPiece.rotate();
+                    if (collision()) currentPiece.rotate();
+                    break;
+                case 'KeyA':
+                    currentPiece.moveLeft();
+                    if (collision()) currentPiece.moveRight();
+                    break;
+                case 'KeyD':
+                    currentPiece.moveRight();
+                    if (collision()) currentPiece.moveLeft();
+                    break;
+                case 'KeyS':
+                    currentPiece.moveDown();
+                    if (collision()) {
+                        mergePiece();
+                        currentPiece = nextPiece;
+                        drawNextPiece();
+                    }
+                    break;
+                case 'KeyW':
+                    currentPiece.rotate();
+                    if (collision()) currentPiece.rotate();
+                    break;
+                case 'Space':
+                    while (!collision()) {
+                        currentPiece.moveDown()
+                    }
                     mergePiece();
                     currentPiece = nextPiece;
                     drawNextPiece();
-                }
-                break;
-            case 'ArrowUp':
-                currentPiece.rotate();
-                if (collision()) currentPiece.rotate();
-                break;
-            case 'KeyA':
-                currentPiece.moveLeft();
-                if (collision()) currentPiece.moveRight();
-                break;
-            case 'KeyD':
-                currentPiece.moveRight();
-                if (collision()) currentPiece.moveLeft();
-                break;
-            case 'KeyS':
-                currentPiece.moveDown();
-                if (collision()) {
-                    mergePiece();
-                    currentPiece = nextPiece;
-                    drawNextPiece();
-                }
-                break;
-            case 'KeyW':
-                currentPiece.rotate();
-                if (collision()) currentPiece.rotate();
-                break;
-            case 'Space':
-                while (!collision()) {
-                    currentPiece.moveDown()
-                }
-                mergePiece();
-                currentPiece = nextPiece;
-                drawNextPiece();
-                break;
-            case 'KeyR':
-                if (savedPiece) {
-                    clearSavedPiece();
-                    intermediatePiece = currentPiece;
-                    currentPiece = savedPiece;
-                    savedPiece = intermediatePiece;
-                    drawSavedPiece();
-                    currentPiece.row = -currentPiece.shape.length + 1;
-                    currentPiece.col = Math.floor(COLUMNS / 2) - Math.floor(currentPiece.shape[0].length / 2);
-                    drawGridAndPiece();
+                    break;
+                case 'KeyR':
+                    if (savedPiece) {
+                        clearSavedPiece();
+                        intermediatePiece = currentPiece;
+                        currentPiece = savedPiece;
+                        savedPiece = intermediatePiece;
+                        drawSavedPiece();
+                        currentPiece.row = -currentPiece.shape.length + 1;
+                        currentPiece.col = Math.floor(COLUMNS / 2) - Math.floor(currentPiece.shape[0].length / 2);
+                        drawGridAndPiece();
 
-                } else {
-                    savedPiece = currentPiece;
-                    drawSavedPiece();
-                    currentPiece = nextPiece;
-                    drawNextPiece();
-                }
-                break;
+                    } else {
+                        savedPiece = currentPiece;
+                        drawSavedPiece();
+                        currentPiece = nextPiece;
+                        drawNextPiece();
+                    }
+                    break;
+            }
         }
-    }
 
-    // Listen for keydown events to control Tetromino
-    document.addEventListener('keydown', handleKeyPress);
+        // Listen for keydown events to control Tetromino
+        document.addEventListener('keydown', handleKeyPress);
 
-    /**
-     * Checks if the game is over by inspecting the top row of the tetris grid
-     * If the top row contains any filles blocks, prompts the user to play again
-     * Resets the game state if the user chooses to play again
-     * Otherwise redirect user to the homepage
-     */
-    function checkGameOver() {
-        // Iterate through the top row of the Tetris grid
-        for (let i = 0; i < tetrisGrid[0].length; ++i) {
-            // If a filled block is found in the top row, the game is over
-            if (tetrisGrid[0][i] !== 0) {
+        /**
+         * Checks if the game is over by inspecting the top row of the tetris grid
+         * If the top row contains any filles blocks, prompts the user to play again
+         * Resets the game state if the user chooses to play again
+         * Otherwise redirect user to the homepage
+         */
+        function checkGameOver() {
+            // Iterate through the top row of the Tetris grid
+            for (let i = 0; i < tetrisGrid[0].length; ++i) {
+                // If a filled block is found in the top row, the game is over
+                if (tetrisGrid[0][i] !== 0) {
+                    return true
+                }
+            }
+            return false
+        }
+
+        /**
+         * Continuouslt updates and renders the game
+         */
+        function gameLoop() {
+            // Update game state four times per frame
+            if(!update()){
                 // Prompt for user with a confirmation dialog
                 if (confirm('Game Over! \n Do you want to play again?')) {
                     // Reset the game
@@ -1281,42 +1306,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     speedModifier = 1;
                     score = 0;
                     clearSavedPiece();
+                    treeSearch = new TreeSearchIA([buildPiece(currentPiece), buildPiece(nextPiece)], tetrisGrid, currentPiece, defaultGridEvaluator)
                 } else {
                     //Redirect to the homepage
                     open("../index.html", "_self");
                 }
             }
-        }
-    }
 
-    /**
-     * Continuouslt updates and renders the game
-     */
-    function gameLoop() {
-        // Check for GameOver conditions
-        checkGameOver();
-
-        // Update game state four times per frame
-        for (let i = 0; i < timePerFrame; i++) {
-            update();
+            // Draw the Tetris grid and current piece
+            drawGridAndPiece();
+            // Refresh the score
+            refreshScore(lineCount);
+            requestAnimationFrame(gameLoop);
         }
 
-        // Draw the Tetris grid and current piece
-        drawGridAndPiece();
-        // Refresh the score
-        refreshScore(lineCount);
-        requestAnimationFrame(gameLoop);
+        // Initialize the current tetromino and draw the next piece
+        currentPiece = new TetrisPiece(getRandomShape());
+        nextPiece = new TetrisPiece(getRandomShape());
 
+        drawNextPiece();
+        aiToggle.addEventListener('change', function () {
+            document.activeElement.blur();
+            activatedIA = this.checked;
+            if (activatedIA)
+                activateIA()
+        })
+
+        function activateIA() {
+            treeSearch = new TreeSearchIA([buildPiece(currentPiece), buildPiece(nextPiece)], tetrisGrid, currentPiece, defaultGridEvaluator)
+        }
+
+        // Start the gameLoop
+        gameLoop();
     }
-
-    // Initialize the current tetromino and draw the next piece
-    currentPiece = new TetrisPiece(getRandomShape(), getColor());
-    drawNextPiece();
-
-    if (activatedIA) {
-        treeSearch = new TreeSearchIA([buildPiece(currentPiece), buildPiece(nextPiece)], tetrisGrid, currentPiece)
-    }
-
-    // Start the gameLoop
-    gameLoop();
-});
+)
+;
