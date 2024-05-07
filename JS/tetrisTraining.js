@@ -1,3 +1,5 @@
+
+
 function printGrid(grid) {
     let str = "[ \n";
     for (let y = 0; y < grid.length; ++y) {
@@ -686,8 +688,6 @@ class TreeSearchIA {
             this.targetCoords = node.solutionPiece.coords
             this.targetShape = node.solutionPiece.shape
         }
-
-        console.log(adaptGridAndPrint(grid))
     }
 
     getNextMove(piece, tetrisGrid) {
@@ -993,7 +993,7 @@ document.addEventListener('DOMContentLoaded', () => {
              * Moves the Tetromino down automatically
              */
             autoMoveDown() {
-                this.frame += speedModifier * 5;
+                this.frame += this.maxFrame/2;
                 if (this.frame >= this.maxFrame) {
                     this.frame = 0;
                     this.row++;
@@ -1293,6 +1293,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
 
+        const NB_PART = 10
+        const NB_BY_GENERATION = 5
+        const MAX_COEF = 100
+        const MIN_COEF = -100
+        const MAX_PARENTS = 2
+        const COEF_MUTATION = 3
+        const MAX_MUTATION_COEF = 30
+
+
         let currentScore = 0
         let nbParties = 0
         let idGen = 0
@@ -1300,27 +1309,29 @@ document.addEventListener('DOMContentLoaded', () => {
         let genResult = []
 
 
-        const NB_PART = 10
-        const NB_BY_GENERATION = 5
-        const MAX_COEF = 100
-        const MIN_COEF = 100
-        const MAX_PARENTS = 2
-        const COEF_MUTATION = 3
-        const MAX_MUTATION_COEF = 30
 
         function gameLoop() {
             // Update game state four times per frame
             if (!update()) {
                 currentScore += score
+                console.log("score de la partie " + (nbParties+1) +"/"+NB_PART+" : "+score)
                 ++nbParties
                 if (nbParties >= NB_PART) {
                     nbParties = 0
                     genResult.push(currentScore / NB_PART)
+                    console.log("élément testé :")
+                    console.log(gen[idGen])
+                    console.log("score moyen : "+currentScore/NB_PART)
                     ++idGen
                     currentScore = 0
                     if (idGen >= NB_BY_GENERATION) {
+                        console.log("fin de génération")
                         let bests = getBestGenIds(gen, genResult)
+                        console.log("meilleur de la génération :")
+                        console.log(bests)
                         let newGen = getNewGen(bests)
+                        console.log("new Generation :")
+                        console.log(newGen)
                         gen = newGen
                         genResult = []
                         idGen = 0
@@ -1372,23 +1383,13 @@ document.addEventListener('DOMContentLoaded', () => {
         function generateRandomGen() {
             let gen = []
             for (let i = 0; i < NB_BY_GENERATION; ++i) {
-                gen.push(new GridEvaluator(getRandomCoeff(), getRandomCoeff(), getRandomCoeff(), getRandomCoeff()))
+                gen.push(new GridEvaluator(getRandomCoeff(false), getRandomCoeff(false), getRandomCoeff(true), getRandomCoeff(false)))
             }
             return gen
         }
 
-        function getRandomCoeff() {
-            return Math.floor(Math.random() * (MAX_COEF - MIN_COEF) + MIN_COEF)
-        }
-
-        let generation = generateRandomGen()
-
-        function getGenResult(generation) {
-            let result = []
-            for (let i = 0; i < generation.length; ++i) {
-                result.push(gameLoopAndGetScore(generation[i]))
-            }
-            return result
+        function getRandomCoeff(positive) {
+            return positive ? Math.floor(Math.random() * MAX_COEF) : Math.floor(Math.random() * MIN_COEF)
         }
 
 
@@ -1442,8 +1443,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             return result
         }
-
-
+        activatedIA = true
+        activateIA()
+        console.log(gen)
         // Start the gameLoop
         gameLoop();
     }
