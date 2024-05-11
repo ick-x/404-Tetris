@@ -1,5 +1,3 @@
-
-
 function printGrid(grid) {
     let str = "[ \n";
     for (let y = 0; y < grid.length; ++y) {
@@ -993,7 +991,7 @@ document.addEventListener('DOMContentLoaded', () => {
              * Moves the Tetromino down automatically
              */
             autoMoveDown() {
-                this.frame += this.maxFrame/2;
+                this.frame += this.maxFrame / 2;
                 if (this.frame >= this.maxFrame) {
                     this.frame = 0;
                     this.row++;
@@ -1309,19 +1307,18 @@ document.addEventListener('DOMContentLoaded', () => {
         let genResult = []
 
 
-
         function gameLoop() {
             // Update game state four times per frame
             if (!update()) {
                 currentScore += score
-                console.log("score de la partie " + (nbParties+1) +"/"+NB_PART+" : "+score)
+                console.log("score de la partie " + (nbParties + 1) + "/" + NB_PART + " : " + score)
                 ++nbParties
                 if (nbParties >= NB_PART) {
                     nbParties = 0
                     genResult.push(currentScore / NB_PART)
                     console.log("élément testé :")
                     console.log(gen[idGen])
-                    console.log("score moyen : "+currentScore/NB_PART)
+                    console.log("score moyen : " + currentScore / NB_PART)
                     ++idGen
                     currentScore = 0
                     if (idGen >= NB_BY_GENERATION) {
@@ -1370,16 +1367,6 @@ document.addEventListener('DOMContentLoaded', () => {
             treeSearch = new TreeSearchIA([buildPiece(currentPiece), buildPiece(nextPiece)], tetrisGrid, currentPiece, gen[idGen])
         }
 
-
-        function gameLoopAndGetScore(evaluator) {
-            let score = 0
-            for (let i = 0; i < NB_PART; ++i) {
-                initTetrisData(evaluator)
-                score += gameLoopV2(evaluator)
-            }
-            return score / NB_PART
-        }
-
         function generateRandomGen() {
             let gen = []
             for (let i = 0; i < NB_BY_GENERATION; ++i) {
@@ -1422,15 +1409,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function getNewValue(coef) {
-            return Math.floor(Math.random() * 100) > COEF_MUTATION ? coef : getMutedValue(coef);
+            return Math.random() * 100 > COEF_MUTATION ? coef : getMutedValue(coef);
         }
 
         function getNewGen(bests) {
             function getNew(bests) {
-                let coef1 = bests[getNewValue(Math.floor(Math.random() * bests.length).coefHeights)]
-                let coef2 = bests[getNewValue(Math.floor(Math.random() * bests.length).coefBumpiness)]
-                let coef3 = bests[getNewValue(Math.floor(Math.random() * bests.length).coefLine)]
-                let coef4 = bests[getNewValue(Math.floor(Math.random() * bests.length).coefHole)]
+                let coef1 = getNewValue(bests[Math.floor(Math.random() * bests.length)].coefHeights)
+                let coef2 = getNewValue(bests[Math.floor(Math.random() * bests.length)].coefBumpiness)
+                let coef3 = getNewValue(bests[Math.floor(Math.random() * bests.length)].coefLine)
+                let coef4 = getNewValue(bests[Math.floor(Math.random() * bests.length)].coefHole)
 
                 return new GridEvaluator(coef1, coef2, coef3, coef4)
             }
@@ -1443,6 +1430,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             return result
         }
+
         activatedIA = true
         activateIA()
         console.log(gen)
