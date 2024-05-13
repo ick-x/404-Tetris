@@ -645,15 +645,15 @@ class TreeSearch {
 
         for (let i = 1; i < nodes.length; ++i) {
             let currentScore = gridEvaluator.evaluateGrid(nodes[i].originalGrid)
-            if (nodes[i].getDepth() >= maxDepth && currentScore > max) {
-                max = currentScore
-                maxDepth = nodes[i].getDepth()
-                idMax = i
+            if (nodes[i].getDepth() >= maxDepth && currentScore >= max) {
+                if (currentScore > max || (nodes[i].previousNode && nodes[idMax].previousNode && gridEvaluator.evaluateGrid(nodes[i].previousNode.originalGrid) >= gridEvaluator.evaluateGrid(nodes[idMax].previousNode.originalGrid))) {
+                    max = currentScore
+                    maxDepth = nodes[i].getDepth()
+                    idMax = i
+                }
             }
         }
-
         return nodes[idMax]
-
     }
 }
 
@@ -767,7 +767,7 @@ function buildPiece(nextPiece) {
 document.addEventListener('DOMContentLoaded', () => {
 
 
-        const defaultGridEvaluator = new GridEvaluator(0, 0, 0, 0)
+        const defaultGridEvaluator = new GridEvaluator(-96, -21, 16, -20)
         // Get HTML canvas element
         const canvas = document.getElementById('tetrisCanvas');
         // 2D Rendering context
@@ -991,7 +991,7 @@ document.addEventListener('DOMContentLoaded', () => {
              * Moves the Tetromino down automatically
              */
             autoMoveDown() {
-                this.frame += this.maxFrame / 2;
+                this.frame += this.maxFrame / 2 - 2;
                 if (this.frame >= this.maxFrame) {
                     this.frame = 0;
                     this.row++;
@@ -1291,21 +1291,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
 
-        const NB_PART = 10
-        const NB_BY_GENERATION = 5
+        const NB_PART = 6
+        const NB_BY_GENERATION = 8
         const MAX_COEF = 100
         const MIN_COEF = -100
         const MAX_PARENTS = 2
-        const COEF_MUTATION = 3
-        const MAX_MUTATION_COEF = 30
+        const COEF_MUTATION = 25
+        const MAX_MUTATION_COEF = 12
+        const firstGen = new GridEvaluator(-96, -21, 16, -20)
+        const secondGen = new GridEvaluator(-96, -21, 16, -6)
 
 
         let currentScore = 0
         let nbParties = 0
         let idGen = 0
-        let gen = generateRandomGen()
+        let gen = getNewGen([firstGen, secondGen])
         let genResult = []
-
 
         function gameLoop() {
             // Update game state four times per frame
@@ -1316,12 +1317,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (nbParties >= NB_PART) {
                     nbParties = 0
                     genResult.push(currentScore / NB_PART)
-                    console.log("élément testé :")
-                    console.log(gen[idGen])
                     console.log("score moyen : " + currentScore / NB_PART)
                     ++idGen
+                    if (idGen < NB_BY_GENERATION) {
+                        console.log("élément testé :")
+                        console.log(gen[idGen])
+                    }
                     currentScore = 0
                     if (idGen >= NB_BY_GENERATION) {
+
                         console.log("fin de génération")
                         let bests = getBestGenIds(gen, genResult)
                         console.log("meilleur de la génération :")
@@ -1332,13 +1336,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         gen = newGen
                         genResult = []
                         idGen = 0
+                        console.log("élément testé :")
+                        console.log(gen[idGen])
                     }
                 }
 
 
                 // Reset the game
                 tetrisGrid = newGrid();
-                speedModifier = 1;
+                speedModifier = 10;
                 score = 0;
                 clearSavedPiece();
                 treeSearch = new TreeSearchIA([buildPiece(currentPiece), buildPiece(nextPiece)], tetrisGrid, currentPiece, gen[idGen])
@@ -1369,7 +1375,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function generateRandomGen() {
             let gen = []
+
             for (let i = 0; i < NB_BY_GENERATION; ++i) {
+
                 gen.push(new GridEvaluator(getRandomCoeff(false), getRandomCoeff(false), getRandomCoeff(true), getRandomCoeff(false)))
             }
             return gen
@@ -1423,8 +1431,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             let result = []
+            for (let i = 0; i < bests.length; ++i) {
+                result.push(bests[i])
+            }
 
-            for (let i = 0; i < NB_BY_GENERATION; ++i) {
+            for (let i = 0; i < NB_BY_GENERATION - bests.length; ++i) {
                 result.push(getNew(bests))
             }
 
@@ -1434,6 +1445,9 @@ document.addEventListener('DOMContentLoaded', () => {
         activatedIA = true
         activateIA()
         console.log(gen)
+
+        console.log("élément testé :")
+        console.log(gen[idGen])
         // Start the gameLoop
         gameLoop();
     }

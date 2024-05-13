@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris Trainer</title>
+    <link rel="stylesheet" href="../CSS/tetris.css">
+</head>
+<body>
+
+    
+<div class="container-column" id="gameContainer">
+    <div class="dark-column" id="darkModeTogglerContainer">
+        <h3>Activer le mode sombre</h3>
+        <label class="switch mt-3">
+            <input type="checkbox" id="backgroundToggle">
+            <span class="slider round"></span>
+        </label>
+    </div>
+    
+    <div class="ai-column" id="aiTogglerContainer">
+        <h3>Activer l'IA</h3>
+        <label class="switch mt-3">
+            <input type="checkbox" id="aiToggle">
+            <span class="slider round"></span>
+        </label>
+    </div>
+
+    <h1 id="displayScore" class="score">Score: 0</h1>
+    <div class="container-row">
+        <div class="container-column">
+            <div id="nextPieceContainer">
+                <h3>Prochaine Pièce :</h3>
+                <canvas id="nextPieceCanvas" width="120" height="120" class="grid"></canvas>
+            </div>
+            <div id="controls" class="commands container-column">
+                <h2>Comment jouer ?</h2>
+                <div class="container-row command">
+                    <p>Bouger à Droite : </p>
+                    <div class="container-row "><img id="rightKeyImage"
+                                                     src="../images/Black/RightKey.png"
+                                                     alt="Move Right">
+                        <p>ou</p> <img id="DKeyImage" src="../images/Black/DKey.png" alt="Move Right">
+                    </div>
+                </div>
+
+                <div class="container-row command">
+                    <p>Bouger à Gauche : </p>
+                    <div class="container-row"><img id="leftKeyImage"
+                                                    src="../images/Black/LeftKey.png"
+                                                    alt="Move Left">
+                        <p>ou</p> <img id="QKeyImage" src="../images/Black/QKey.png" alt="Move Right">
+                    </div>
+                </div>
+
+                <div class="container-row command">
+                    <p>Bouger en Bas : </p>
+                    <div class="container-row"><img id="downKeyImage"
+                                                    src="../images/Black/DownKey.png"
+                                                    alt="Move Down">
+                        <p>ou</p> <img id="SKeyImage" src="../images/Black/SKey.png" alt="Move Right">
+                    </div>
+                </div>
+
+                <div class="container-row command">
+
+                    <p>Faire tourner la Pièce : </p>
+                    <div class="container-row"><img id="upKeyImage"
+                                                    src="../images/Black/UpKey.png"
+                                                    alt="Rotate">
+                        <p>ou</p> <img id="ZKeyImage" src="../images/Black/ZKey.png" alt="Move Right">
+                    </div>
+                </div>
+                <div class="container-row command">
+
+                    <p>Sauvegarder une Pièce : </p>
+                    <div class="container-row"><img id="rKeyImage"
+                                                    src="../images/Black/RKey.png"
+                                                    alt="Save Piece"></div>
+                </div>
+                <div class="container-row command">
+
+                    <p>Descendre au Bas de la Grille : </p>
+                    <div class="container-row"><img id="spaceKeyImage"
+                                                    src="../images/Black/SpaceKey.png"
+                                                    alt="Move to Bottom">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <canvas id="tetrisCanvas" class="grid" width="300" height="600"></canvas>
+        <br>
+
+        <div id="savedPieceContainer">
+            <h3>Pièce sauvegardée :</h3>
+            <canvas id="savedPieceCanvas" width="120" height="120" class="grid"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="../JS/tetrisTraining.js"></script>
+<script src="../JS/darkMode.js"></script>
+
+</body>
+</html>

@@ -645,24 +645,24 @@ class TreeSearch {
 
         for (let i = 1; i < nodes.length; ++i) {
             let currentScore = gridEvaluator.evaluateGrid(nodes[i].originalGrid)
-            if (nodes[i].getDepth() >= maxDepth && currentScore > max) {
-                max = currentScore
-                maxDepth = nodes[i].getDepth()
-                idMax = i
+            if (nodes[i].getDepth() >= maxDepth && currentScore >= max) {
+                if (currentScore > max || (nodes[i].previousNode && nodes[idMax].previousNode && gridEvaluator.evaluateGrid(nodes[i].previousNode.originalGrid) >= gridEvaluator.evaluateGrid(nodes[idMax].previousNode.originalGrid))) {
+                    max = currentScore
+                    maxDepth = nodes[i].getDepth()
+                    idMax = i
+                }
             }
         }
-
         return nodes[idMax]
-
     }
 }
 
-function adaptGridAndPrint(base){
-    let grid = Array.from({length : base.length}, ()=> Array(base[0].length).fill(0));
+function adaptGridAndPrint(base) {
+    let grid = Array.from({length: base.length}, () => Array(base[0].length).fill(0));
 
-    for(let y =0 ;y<base.length;++y){
-        for(let x =0 ;x<base[0].length;++x){
-            if(base[y][x]!==0)grid[y][x] = 1;
+    for (let y = 0; y < base.length; ++y) {
+        for (let x = 0; x < base[0].length; ++x) {
+            if (base[y][x] !== 0) grid[y][x] = 1;
         }
     }
     return printGrid(grid)
@@ -686,8 +686,6 @@ class TreeSearchIA {
             this.targetCoords = node.solutionPiece.coords
             this.targetShape = node.solutionPiece.shape
         }
-
-        console.log(adaptGridAndPrint(grid))
     }
 
     getNextMove(piece, tetrisGrid) {
@@ -769,7 +767,7 @@ function buildPiece(nextPiece) {
 document.addEventListener('DOMContentLoaded', () => {
 
 
-        const defaultGridEvaluator = new GridEvaluator(0, 0, 0, 0)
+        const defaultGridEvaluator = new GridEvaluator(-96, -21, 16, -20)
         // Get HTML canvas element
         const canvas = document.getElementById('tetrisCanvas');
         // 2D Rendering context
@@ -993,7 +991,7 @@ document.addEventListener('DOMContentLoaded', () => {
              * Moves the Tetromino down automatically
              */
             autoMoveDown() {
-                this.frame += speedModifier * 5 ;
+                this.frame += speedModifier * 5;
                 if (this.frame >= this.maxFrame) {
                     this.frame = 0;
                     this.row++;
@@ -1149,8 +1147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (activatedIA) {
                         treeSearch = new TreeSearchIA([buildPiece(currentPiece), buildPiece(nextPiece)], tetrisGrid, currentPiece, defaultGridEvaluator)
                     }
-                }
-                else if (activatedIA) {
+                } else if (activatedIA) {
                     treeSearch.updateTetris(currentPiece, tetrisGrid)
                 }
             }
@@ -1298,7 +1295,7 @@ document.addEventListener('DOMContentLoaded', () => {
          */
         function gameLoop() {
             // Update game state four times per frame
-            if(!update()){
+            if (!update()) {
                 // Prompt for user with a confirmation dialog
                 if (confirm('Game Over! \n Do you want to play again?')) {
                     // Reset the game
